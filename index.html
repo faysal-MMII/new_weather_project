@@ -884,7 +884,7 @@ function buildContext(data) {
   };
 }
 
-/* ── Call Ollama API ── */
+/* ── Call Render API ── */
 async function generateForecast(ctx) {
   stepActive(4);
 
@@ -916,7 +916,7 @@ WEEK SUMMARY:
 WRITING INSTRUCTIONS:
 1. Start with exactly one "In brief:" sentence summarising what the post covers. This will be formatted separately — just write it as the first line starting with "In brief:".
 
-2. After the In brief line, write the full article. Organically decide what to cover — do NOT use a fixed template every time. Options: lead with today if it's dramatic; lead with the week if there's a notable pattern; include a brief look back at the past week if something notable happened. Vary your approach each time.
+2. After the In brief line, write the full article. Organically decide what to cover — do NOT use a fixed template every time. Options: lead with today if it's dramatic; lead with the week if there's a notable pattern; include a brief look back at the past week if something happened. Vary your approach each time.
 
 3. Use day-of-week headers (e.g. "Wednesday", "Thursday through the weekend") as natural section breaks within the prose — exactly like Space City Weather does. These become <h3> headers. Mark them by putting the header text on its own line preceded by "###".
 
@@ -934,23 +934,16 @@ WRITING INSTRUCTIONS:
 
 Output only the article text. No title, no byline, no extra commentary.`;
 
-  // CORRECTION 1: Replace with Ollama API endpoint
-  const response = await fetch("https://api.ollama.com/api/chat", {
+  // CORRECTION: Use Render URL instead of Ollama API
+  const response = await fetch("https://weather-project-237m.onrender.com/api/forecast", {
     method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "Authorization": "Bearer 521d401510b74f4a8c70f907a088f7f3.Vb4CcJYWf6e7xFYEQyFUNyII"
-    },
-    body: JSON.stringify({
-      model: "qwen2.5:1.5b",
-      messages: [{ role: "user", content: prompt }],
-      stream: false
-    })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: prompt })
   });
 
-  // CORRECTION 2: Updated response parsing for Ollama
+  // CORRECTION: Updated response parsing for Render API
   const data = await response.json();
-  return data.message.content.trim();
+  return data.text;
 }
 
 /* ── Parse and render article ── */

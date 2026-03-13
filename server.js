@@ -14,7 +14,7 @@ app.post('/api/forecast', async (req, res) => {
         'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'qwen2.5:1.5b',
+        model: 'qwen3.5:9b',
         messages: [{ role: 'user', content: req.body.prompt }],
         stream: false
       })
