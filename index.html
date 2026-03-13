@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abuja Weather</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --text:       #1a1a1a;
+  --muted:      #666;
+  --link:       #4c649c;
+  --border:     #e0e0e0;
+  --bg:         #ffffff;
+  --bg-soft:    #f7f7f5;
+  --brief-bg:   #eef2f7;
+  --brief-border: #4c649c;
+  --accent:     #c0392b;
+  --max:        1100px;
+  --serif:      'Lora', Georgia, 'Times New Roman', serif;
+  --sans:       'Source Sans 3', 'Source Sans Pro', Arial, sans-serif;
+}
+
+html { font-size: 17px; }
+
+body {
+  font-family: var(--serif);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+}
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; height: auto; display: block; }
+
+/* ── Site Header ── */
+.site-header {
+  border-bottom: 3px solid var(--text);
+  padding: 18px 20px 14px;
+  text-align: center;
+  background: var(--bg);
+}
+
+.site-title {
+  font-family: var(--serif);
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.site-title a { color: var(--text); }
+.site-title a:hover { text-decoration: none; }
+
+.site-description {
+  font-family: var(--sans);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* ── Primary Nav ── */
+.main-navigation {
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-inner ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.nav-inner ul li a {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+  padding: 11px 16px;
+  transition: background 0.15s;
+}
+
+.nav-inner ul li a:hover,
+.nav-inner ul li a.current {
+  background: var(--text);
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ── Page Layout ── */
+.site-content {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 48px;
+  align-items: start;
+}
+
+/* ── Article ── */
+.entry-header { margin-bottom: 10px; }
+
+.entry-title {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.entry-meta {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.entry-meta a { color: var(--muted); }
+.entry-meta a:hover { color: var(--link); text-decoration: underline; }
+
+.entry-meta .byline { margin-left: 4px; }
+
+/* ── In Brief box — exactly like SCW ── */
+.in-brief {
+  background: var(--brief-bg);
+  border-left: 4px solid var(--brief-border);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.in-brief strong { color: var(--text); }
+
+/* ── Article body ── */
+.entry-content { font-size: 1rem; line-height: 1.75; }
+
+.entry-content p { margin-bottom: 1.2em; }
+
+.entry-content h3 {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.8em 0 0.5em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* Inline map/image blocks — like SCW's weather map images */
+.wp-block-image {
+  margin: 1.5em 0;
+}
+
+.wp-block-image img {
+  width: 100%;
+  border: 1px solid var(--border);
+}
+
+.wp-block-image figcaption,
+.img-caption {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.wp-block-image.alignright {
+  float: right;
+  margin: 0 0 1em 1.5em;
+  max-width: 280px;
+}
+
+.wp-block-image.alignright img { width: 100%; }
+
+/* ── Loading state ── */
+.loading-state {
+  padding: 48px 0;
+  text-align: center;
+  font-family: var(--sans);
+  color: var(--muted);
+}
+
+.loading-steps {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.loading-step {
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+
+.loading-step.active { opacity: 1; color: var(--text); }
+.loading-step.done { opacity: 0.5; }
+
+.step-indicator {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.loading-step.active .step-indicator { background: var(--link); }
+.loading-step.done .step-indicator { background: #2ecc71; }
+
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border);
+  border-top-color: var(--link);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Share row ── */
+.scw-share-row {
+  margin-top: 1.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.share-btn {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--muted);
+  cursor: pointer;
+  background: var(--bg);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.share-btn:hover { border-color: var(--text); color: var(--text); text-decoration: none; }
+
+/* ── Regenerate button ── */
+.regen-wrap {
+  margin-top: 2em;
+  padding-top: 1.2em;
+  border-top: 2px solid var(--text);
+}
+
+.btn-regen {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-regen:hover { background: var(--link); }
+.btn-regen:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.regen-note {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ── Post navigation ── */
+.post-navigation {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  color: var(--link);
+  font-size: 0.82rem;
+}
+
+.nav-btn:hover { background: var(--border); text-decoration: none; }
+
+/* ── Comments section ── */
+.comments-area {
+  margin-top: 2.5em;
+  padding-top: 1.5em;
+  border-top: 2px solid var(--text);
+}
+
+.comments-title {
+  font-family: var(--sans);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.2em;
+  color: var(--text);
+}
+
+.comment-list { list-style: none; }
+
+.comment-body {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.comment-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.comment-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--link);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.comment-author-name {
+  font-weight: 700;
+  color: var(--link);
+  font-size: 0.9rem;
+}
+
+.comment-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.comment-text { line-height: 1.6; color: var(--text); }
+
+.discourse-link {
+  margin-top: 1.2em;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+}
+
+/* ── Sidebar ── */
+.sidebar { font-family: var(--sans); }
+
+.widget {
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.widget:last-child { border-bottom: none; }
+
+.widget-title {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--text);
+}
+
+/* Current conditions widget */
+.conditions-widget {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  padding: 16px;
+  text-align: center;
+}
+
+.conditions-temp {
+  font-family: var(--serif);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+
+.conditions-desc {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 4px 0 12px;
+  font-style: italic;
+}
+
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  text-align: left;
+  margin-top: 10px;
+}
+
+.cond-item {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.cond-item strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* Newsletter */
+.newsletter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.newsletter-form input[type="email"] {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  width: 100%;
+  outline: none;
+}
+
+.newsletter-form input[type="email"]:focus {
+  border-color: var(--link);
+}
+
+.newsletter-form button {
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.newsletter-form button:hover { background: var(--link); }
+
+.newsletter-subcount {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* Recent posts */
+.recent-posts { list-style: none; }
+
+.recent-posts li {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.recent-posts li:first-child { border-top: 0; }
+.recent-posts li:last-child { border-bottom: 0; }
+.recent-posts li a { color: var(--text); }
+.recent-posts li a:hover { color: var(--link); }
+.recent-posts li.current a { color: var(--link); font-weight: 600; }
+
+/* Categories */
+.cat-list { list-style: none; }
+.cat-list li {
+  font-size: 0.9rem;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cat-list li:last-child { border-bottom: 0; }
+
+/* About widget */
+.about-text {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.about-text strong { color: var(--text); }
+
+/* App download */
+.app-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.app-badge {
+  display: inline-block;
+  background: var(--text);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 20px;
+  text-align: center;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+  width: 100%;
+  text-decoration: none;
+}
+
+.app-badge:hover { background: var(--link); text-decoration: none; color: #fff; }
+.app-badge.coming-soon { background: var(--muted); cursor: default; }
+.app-badge.coming-soon:hover { background: var(--muted); }
+
+/* ── Footer ── */
+.site-footer {
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  padding: 20px;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.site-footer a { color: var(--muted); text-decoration: underline; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .site-content {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar { border-top: 2px solid var(--text); padding-top: 28px; }
+
+  .site-title { font-size: 1.8rem; }
+  .entry-title { font-size: 1.4rem; }
+  .nav-inner ul li a { padding: 9px 11px; font-size: 0.78rem; }
+  .wp-block-image.alignright { float: none; max-width: 100%; margin: 1em 0; }
+}
+
+/* ── Fade in on load ── */
+.entry-header, .in-brief, .entry-content {
+  animation: fadeUp 0.4s ease both;
+}
+.in-brief { animation-delay: 0.05s; }
+.entry-content { animation-delay: 0.1s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Site Header ── -->
+<header class="site-header">
+  <h1 class="site-title"><a href="#" id="site-title-link">Abuja Weather</a></h1>
+  <p class="site-description">Honest, hype-free forecasts for the Federal Capital Territory</p>
+</header>
+
+<!-- ── Navigation ── -->
+<nav class="main-navigation">
+  <div class="nav-inner">
+    <ul>
+      <li><a href="#" class="current">Home</a></li>
+      <li><a href="#">About Us</a></li>
+      <li><a href="#">NiMet Alerts</a></li>
+      <li><a href="#">FCT Flood Guide</a></li>
+      <li><a href="#">Contact</a></li>
+      <li><a href="#">Other Nigerian Sites</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ── Page ── -->
+<div class="site-content">
+
+  <!-- ── Main Article Column ── -->
+  <main id="main">
+    <article id="post-1">
+      <div id="article-container">
+        <!-- Loading state -->
+        <div class="loading-state" id="loading">
+          <div class="spinner"></div>
+          <div style="font-family:var(--sans);font-size:0.9rem;color:var(--muted)">Preparing today's forecast…</div>
+          <div class="loading-steps">
+            <div class="loading-step active" id="step-1">
+              <div class="step-indicator"></div>
+              <span>Fetching current Abuja conditions…</span>
+            </div>
+            <div class="loading-step" id="step-2">
+              <div class="step-indicator"></div>
+              <span>Pulling 7-day ECMWF forecast…</span>
+            </div>
+            <div class="loading-step" id="step-3">
+              <div class="step-indicator"></div>
+              <span>Reviewing the past week…</span>
+            </div>
+            <div class="loading-step" id="step-4">
+              <div class="step-indicator"></div>
+              <span>Writing today's post…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+
+    <!-- Current Conditions -->
+    <div class="widget">
+      <h2 class="widget-title">Current Conditions</h2>
+      <div class="conditions-widget">
+        <div class="conditions-temp" id="sw-temp">--°C</div>
+        <div class="conditions-desc" id="sw-desc">Loading…</div>
+        <div class="conditions-grid">
+          <div class="cond-item"><strong id="sw-feels">--°C</strong>Feels like</div>
+          <div class="cond-item"><strong id="sw-humidity">--%</strong>Humidity</div>
+          <div class="cond-item"><strong id="sw-wind">-- km/h</strong>Wind</div>
+          <div class="cond-item"><strong id="sw-uv">--</strong>UV Index</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="widget">
+      <h2 class="widget-title">Get Abuja Weather in your inbox!</h2>
+      <div class="newsletter-form">
+        <input type="email" placeholder="Type your email…">
+        <button type="button">Subscribe</button>
+      </div>
+      <div class="newsletter-subcount" id="sub-count"></div>
+    </div>
+
+    <!-- Get the App -->
+    <div class="widget">
+      <h2 class="widget-title">Get the App</h2>
+      <div class="app-badges">
+        <a href="#" class="app-badge">▶ Download on Android</a>
+        <a href="#" class="app-badge coming-soon">🍎 iOS — Coming Soon</a>
+      </div>
+    </div>
+
+    <!-- Recent Posts -->
+    <div class="widget">
+      <h2 class="widget-title">Recent Posts</h2>
+      <ul class="recent-posts" id="recent-posts">
+        <li class="current"><a href="#">Today's forecast loading…</a></li>
+      </ul>
+    </div>
+
+    <!-- Categories -->
+    <div class="widget">
+      <h2 class="widget-title">Categories</h2>
+      <ul class="cat-list">
+        <li><a href="#">Abuja Weather</a></li>
+        <li><a href="#">Harmattan Season</a></li>
+        <li><a href="#">Rainy Season</a></li>
+        <li><a href="#">Severe Weather</a></li>
+        <li><a href="#">Nigeria Weather</a></li>
+        <li><a href="#">Weather Explained</a></li>
+        <li><a href="#">FCT Flood Watch</a></li>
+      </ul>
+    </div>
+
+    <!-- About -->
+    <div class="widget">
+      <h2 class="widget-title">About This Site</h2>
+      <p class="about-text">
+        <strong>Abuja Weather</strong> delivers daily, hype-free forecasts for the Federal Capital Territory — written in plain language, with no panic and no filler.<br><br>
+        Weather data is sourced from <strong>Open-Meteo</strong> (ECMWF IFS model). Because Nigeria has limited ground radar, forecasts rely on satellite-derived precipitation data and numerical weather models.<br><br>
+        <em>No hype. Just the forecast.</em>
+      </p>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ── Footer ── -->
+<footer class="site-footer">
+  © 2026 Abuja Weather<br>
+  Data: <a href="https://open-meteo.com">Open-Meteo</a> (ECMWF IFS) · For life-safety decisions, consult <a href="https://nimet.gov.ng">NiMet</a>
+</footer>
+
+<script>
+/* ─────────────────────────────────────────
+   CONFIG — change SITE_NAME once you have a brand
+   ──────────────────────────────────────── */
+const SITE_NAME = "Abuja Weather";
+const LAT = 9.0765, LON = 7.3986;
+
+/* ── Helpers ── */
+const weatherDesc = {
+  0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',
+  45:'Foggy',48:'Freezing Fog',51:'Light Drizzle',53:'Drizzle',
+  55:'Heavy Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',
+  71:'Light Snow',73:'Snow',75:'Heavy Snow',
+  80:'Rain Showers',81:'Heavy Showers',82:'Violent Showers',
+  95:'Thunderstorm',96:'Thunderstorm w/Hail',99:'Severe Thunderstorm'
+};
+
+const weatherIcon = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
+  71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',
+  95:'⛈️',96:'⛈️',99:'⛈️'
+};
+
+function windDir(deg) {
+  return ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45)%8];
+}
+
+function dayLabel(isoStr, i) {
+  if (i === 0) return 'Today';
+  if (i === 1) return 'Tomorrow';
+  return new Date(isoStr).toLocaleDateString('en-NG', { weekday: 'long' });
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+function stepDone(n) {
+  const el = document.getElementById(`step-${n}`);
+  if (el) { el.classList.remove('active'); el.classList.add('done'); }
+}
+
+function stepActive(n) {
+  stepDone(n - 1);
+  const el = document.getElementById(`step-${n}`);
+  if (el) el.classList.add('active');
+}
+
+/* ── Fetch weather ── */
+async function fetchWeather() {
+  stepActive(1);
+  const forecast = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,` +
+    `wind_speed_10m,wind_direction_10m,surface_pressure,uv_index` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,` +
+    `precipitation_probability_max,precipitation_sum` +
+    `&timezone=Africa%2FLagos&forecast_days=7&wind_speed_unit=kmh`
+  ).then(r => r.json());
+
+  stepActive(2);
+  // Past 7 days
+  const today = new Date();
+  const past  = new Date(today); past.setDate(today.getDate() - 7);
+  const fmt   = d => d.toISOString().split('T')[0];
+
+  stepActive(3);
+  const historical = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum` +
+    `&timezone=Africa%2FLagos&start_date=${fmt(past)}&end_date=${fmt(today)}`
+  ).then(r => r.json());
+
+  return { forecast, historical };
+}
+
+/* ── Populate sidebar conditions ── */
+function populateConditions(data) {
+  const c = data.forecast.current;
+  document.getElementById('sw-temp').textContent     = `${Math.round(c.temperature_2m)}°C`;
+  document.getElementById('sw-desc').textContent     = (weatherIcon[c.weather_code]||'') + ' ' + (weatherDesc[c.weather_code]||'');
+  document.getElementById('sw-feels').textContent    = `${Math.round(c.apparent_temperature)}°C`;
+  document.getElementById('sw-humidity').textContent = `${c.relative_humidity_2m}%`;
+  document.getElementById('sw-wind').textContent     = `${Math.round(c.wind_speed_10m)} km/h ${windDir(c.wind_direction_10m)}`;
+  document.getElementById('sw-uv').textContent       = Math.round(c.uv_index || 0);
+}
+
+/* ── Build weather context for AI ── */
+function buildContext(data) {
+  const c  = data.forecast.current;
+  const d  = data.forecast.daily;
+  const h  = data.historical.daily;
+  const now = new Date();
+  const mo  = now.getMonth() + 1;
+
+  let season = '';
+  if (mo >= 11 || mo <= 2) season = 'harmattan season — dry, dusty northeast trade winds dominate, visibility often reduced, nights unusually cool';
+  else if (mo >= 3 && mo <= 5) season = 'the pre-rains transition — heat builds, humidity rises, first showers possible';
+  else if (mo >= 6 && mo <= 9) season = 'the rainy season — afternoon and evening downpours are common, flooding risk in low-lying areas';
+  else season = 'the October–November transition back toward harmattan — rains tapering off, air beginning to dry';
+
+  const pastRainTotal  = (h.precipitation_sum || []).reduce((a, b) => a + b, 0).toFixed(1);
+  const pastMaxAvg     = ((h.temperature_2m_max || []).reduce((a, b) => a + b, 0) / (h.temperature_2m_max||[1]).length).toFixed(1);
+  const hadRain        = parseFloat(pastRainTotal) > 3;
+
+  const weekMaxPrecip  = Math.max(...(d.precipitation_probability_max || [0]));
+  const rainyDays      = (d.precipitation_probability_max || []).filter(p => p >= 40).length;
+  const weekHighAvg    = (d.temperature_2m_max.reduce((a,b)=>a+b,0) / d.temperature_2m_max.length).toFixed(1);
+
+  // Build day-by-day data string for AI
+  const dayLines = d.time.map((date, i) => {
+    const label = dayLabel(date, i);
+    const high  = Math.round(d.temperature_2m_max[i]);
+    const low   = Math.round(d.temperature_2m_min[i]);
+    const rain  = d.precipitation_probability_max[i] || 0;
+    const desc  = weatherDesc[d.weather_code[i]] || 'variable';
+    return `  ${label}: High ${high}°C / Low ${low}°C, ${desc}, ${rain}% rain chance`;
+  }).join('\n');
+
+  return {
+    dateStr: fmtDate(now),
+    season,
+    currentTemp:  Math.round(c.temperature_2m),
+    feelsLike:    Math.round(c.apparent_temperature),
+    humidity:     c.relative_humidity_2m,
+    windSpeed:    Math.round(c.wind_speed_10m),
+    windDirStr:   windDir(c.wind_direction_10m),
+    uvIndex:      Math.round(c.uv_index || 0),
+    pressure:     Math.round(c.surface_pressure),
+    condDesc:     weatherDesc[c.weather_code] || 'variable',
+    todayHigh:    Math.round(d.temperature_2m_max[0]),
+    todayLow:     Math.round(d.temperature_2m_min[0]),
+    todayRain:    d.precipitation_probability_max[0] || 0,
+    pastRainTotal, pastMaxAvg, hadRain,
+    weekMaxPrecip, rainyDays, weekHighAvg,
+    dayLines,
+    dailyData: d
+  };
+}
+
+/* ── Call Ollama API ── */
+async function generateForecast(ctx) {
+  stepActive(4);
+
+  const prompt = `You are the voice of "${SITE_NAME}", a trusted local weather blog covering Abuja, Nigeria — the Federal Capital Territory. You write daily forecast posts in the style of Space City Weather (Houston): conversational, honest, hype-free, expert but never condescending. You write like a real meteorologist who lives in Abuja.
+
+Today is ${ctx.dateStr}. Abuja is currently in ${ctx.season}.
+
+CURRENT CONDITIONS RIGHT NOW:
+- Temperature: ${ctx.currentTemp}°C (feels like ${ctx.feelsLike}°C)
+- Conditions: ${ctx.condDesc}
+- Humidity: ${ctx.humidity}%
+- Wind: ${ctx.windSpeed} km/h from the ${ctx.windDirStr}
+- UV Index: ${ctx.uvIndex}
+- Pressure: ${ctx.pressure} hPa
+
+7-DAY FORECAST (use these to write day-by-day sections):
+${ctx.dayLines}
+
+PAST 7 DAYS:
+- Average high: ${ctx.pastMaxAvg}°C
+- Total rainfall: ${ctx.pastRainTotal}mm
+- Notable rain: ${ctx.hadRain ? 'yes — worth mentioning' : 'no significant rain'}
+
+WEEK SUMMARY:
+- Days with ≥40% rain chance: ${ctx.rainyDays}
+- Peak rain probability: ${ctx.weekMaxPrecip}%
+- Average high this week: ${ctx.weekHighAvg}°C
+
+WRITING INSTRUCTIONS:
+1. Start with exactly one "In brief:" sentence summarising what the post covers. This will be formatted separately — just write it as the first line starting with "In brief:".
+
+2. After the In brief line, write the full article. Organically decide what to cover — do NOT use a fixed template every time. Options: lead with today if it's dramatic; lead with the week if there's a notable pattern; include a brief look back at the past week if something notable happened. Vary your approach each time.
+
+3. Use day-of-week headers (e.g. "Wednesday", "Thursday through the weekend") as natural section breaks within the prose — exactly like Space City Weather does. These become <h3> headers. Mark them by putting the header text on its own line preceded by "###".
+
+4. Where weather maps or satellite images would appear in a real post, insert a placeholder on its own line in this exact format: [MAP: brief description of what map would show here]. These will be rendered as image placeholders. Use 1–3 maps per post, placed naturally within the relevant sections.
+
+5. Write 4–7 paragraphs total. No bullet points. Pure prose. Vary sentence length. Sound human — like a knowledgeable friend.
+
+6. Reference Abuja landmarks and context naturally: Maitama, Garki, Wuse, Gwarinpa, the Aso Rock hills, NASS, the airport road, harmattan dust haze, flooding in low-lying areas, etc. Use these where they genuinely fit — not forced.
+
+7. Be honest about uncertainty. Say "my best guess is…", "there's a chance…", "if things go as I expect…" when appropriate.
+
+8. End with one practical takeaway sentence for residents.
+
+9. Never use em-dashes. Never say "it's worth noting" or "it's important to remember". No AI clichés.
+
+Output only the article text. No title, no byline, no extra commentary.`;
+
+  // CORRECTION 1: Replace with Ollama API endpoint
+  const response = await fetch("https://api.ollama.com/api/chat", {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": "Bearer 521d401510b74f4a8c70f907a088f7f3.Vb4CcJYWf6e7xFYEQyFUNyII"
+    },
+    body: JSON.stringify({
+      model: "qwen2.5:1.5b",
+      messages: [{ role: "user", content: prompt }],
+      stream: false
+    })
+  });
+
+  // CORRECTION 2: Updated response parsing for Ollama
+  const data = await response.json();
+  return data.message.content.trim();
+}
+
+/* ── Parse and render article ── */
+function renderArticle(raw, ctx) {
+  const lines = raw.split('\n');
+  let briefLine = '';
+  let bodyLines = [];
+
+  // Extract "In brief:" line
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().toLowerCase().startsWith('in brief:')) {
+      briefLine = lines[i].trim();
+      bodyLines = lines.slice(i + 1);
+      break;
+    }
+  }
+  if (!briefLine) bodyLines = lines;
+
+  // Build HTML from body lines
+  let bodyHTML = '';
+  let currentPara = '';
+
+  function flushPara() {
+    if (currentPara.trim()) {
+      bodyHTML += `<p>${currentPara.trim()}</p>\n`;
+      currentPara = '';
+    }
+  }
+
+  for (const line of bodyLines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushPara();
+      continue;
+    }
+    // Day header
+    if (trimmed.startsWith('###')) {
+      flushPara();
+      const heading = trimmed.replace(/^###\s*/, '');
+      bodyHTML += `<h3>${heading}</h3>\n`;
+      continue;
+    }
+    // Map placeholder
+    if (trimmed.startsWith('[MAP:')) {
+      flushPara();
+      const desc = trimmed.replace(/^\[MAP:\s*/i, '').replace(/\]$/, '').trim();
+      bodyHTML += `
+        <div class="wp-block-image">
+          <figure>
+            <div style="background:#f0f0ee;border:1px solid #ddd;padding:48px 24px;text-align:center;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" style="margin-bottom:10px;display:block;margin-left:auto;margin-right:auto">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+              </svg>
+              <div style="font-family:var(--sans);font-size:0.82rem;color:#888;font-style:italic">${desc}</div>
+            </div>
+            <figcaption class="img-caption">${desc}</figcaption>
+          </figure>
+        </div>`;
+      continue;
+    }
+    // Regular text — accumulate into paragraph
+    currentPara += (currentPara ? ' ' : '') + trimmed;
+  }
+  flushPara();
+
+  const now     = new Date();
+  const timeStr = now.toLocaleTimeString('en-NG', { hour:'2-digit', minute:'2-digit', hour12: true });
+  const dateStr = now.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  document.getElementById('article-container').innerHTML = `
+    <header class="entry-header">
+      <h1 class="entry-title" id="post-title">Loading headline…</h1>
+      <div class="entry-meta">
+        <span class="posted-on">
+          ${dateStr} <span style="color:#aaa">at</span> ${timeStr} WAT
+        </span>
+        <span class="byline"> by <a href="#">Abuja Weather Desk</a></span>
+      </div>
+    </header>
+
+    ${briefLine ? `
+    <div class="in-brief">
+      <strong>In brief</strong>: ${briefLine.replace(/^in brief:\s*/i, '')}
+    </div>` : ''}
+
+    <div class="entry-content">
+      ${bodyHTML}
+    </div>
+
+    <div class="scw-share-row">
+      <a class="share-btn" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(document.title)}" target="_blank">Share on X</a>
+      <a class="share-btn" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}" target="_blank">Facebook</a>
+      <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent(document.title + ' ' + location.href)}" target="_blank">WhatsApp</a>
+    </div>
+
+    <div class="regen-wrap">
+      <button class="btn-regen" id="regen-btn" onclick="handleRegen()">↻ Regenerate Forecast</button>
+      <p class="regen-note">Each generation pulls live weather data — articles vary each time.</p>
+    </div>
+
+    <nav class="post-navigation">
+      <span style="font-family:var(--sans);font-size:0.82rem;color:var(--muted)">← Previous: </span>
+      <a class="nav-btn" href="#">Loading previous post…</a>
+    </nav>
+
+    <div class="comments-area">
+      <h2 class="comments-title">Notable Comments</h2>
+      <ol class="comment-list" id="comments-list">
+        <li><div class="comment-body" style="padding:20px 0;font-family:var(--sans);font-size:0.9rem;color:var(--muted);font-style:italic">
+          Comments will appear here via the community forum once the site launches.
+        </div></li>
+      </ol>
+      <div class="discourse-link">
+        <a href="#">Continue the discussion in the Abuja Weather community forum →</a>
+      </div>
+    </div>
+  `;
+
+  // Generate a headline from the AI text
+  generateHeadline(ctx);
+
+  // Update recent posts
+  updateRecentPosts(briefLine || ctx.condDesc);
+}
+
+function generateHeadline(ctx) {
+  let h = '';
+  if (ctx.todayRain >= 60)       h = `Heavy rain likely across the FCT today — what to expect`;
+  else if (ctx.todayRain >= 35)  h = `Rain possible this ${new Date().getHours() < 14 ? 'afternoon' : 'evening'} for Abuja`;
+  else if (ctx.rainyDays >= 4)   h = `A wet stretch ahead for the FCT — here's the breakdown`;
+  else if (ctx.currentTemp >= 38) h = `Another scorcher in Abuja, with temperatures pushing ${ctx.todayHigh}°C`;
+  else if (ctx.season.includes('harmattan')) h = `Harmattan conditions continue over the FCT — dust and dry air persist`;
+  else if (ctx.hadRain)          h = `After recent rainfall, conditions settle across Abuja`;
+  else h = `A ${ctx.todayHigh >= 35 ? 'hot' : 'warm'}, ${ctx.todayRain < 20 ? 'dry' : 'partly unsettled'} day for the Federal Capital`;
+
+  const el = document.getElementById('post-title');
+  if (el) el.textContent = h;
+  document.title = `${h} – ${SITE_NAME}`;
+}
+
+function updateRecentPosts(brief) {
+  const ul = document.getElementById('recent-posts');
+  const title = document.getElementById('post-title');
+  if (ul && title) {
+    ul.innerHTML = `
+      <li class="current"><a href="#" aria-current="page">${title.textContent}</a></li>
+      <li><a href="#">Yesterday's Abuja forecast</a></li>
+      <li><a href="#">Monday update: week ahead outlook</a></li>
+      <li><a href="#">Weekend summary: what happened</a></li>
+      <li><a href="#">Harmattan season guide for the FCT</a></li>
+    `;
+  }
+}
+
+/* ── Regen handler ── */
+let weatherCtx = null;
+
+async function handleRegen() {
+  const btn = document.getElementById('regen-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
+
+  document.getElementById('article-container').innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div style="font-family:var(--sans);font-size:0.9rem;color:var(--muted)">Writing a new forecast…</div>
+    </div>`;
+
+  try {
+    const raw = await generateForecast(weatherCtx);
+    renderArticle(raw, weatherCtx);
+  } catch(e) {
+    document.getElementById('article-container').innerHTML =
+      `<p style="font-family:var(--sans);color:#c0392b;padding:20px 0">Failed to regenerate. Please try again.</p>`;
+  }
+}
+
+/* ── Boot ── */
+(async () => {
+  try {
+    const data = await fetchWeather();
+    populateConditions(data);
+    weatherCtx = buildContext(data);
+    const raw  = await generateForecast(weatherCtx);
+    document.getElementById('loading').style.display = 'none';
+    renderArticle(raw, weatherCtx);
+  } catch(err) {
+    document.getElementById('loading').innerHTML = `
+      <div style="font-family:var(--sans);color:#c0392b;padding:20px 0">
+        ⚠️ Failed to load forecast: ${err.message}<br>
+        <span style="color:var(--muted);font-size:0.85rem">Check your connection and reload.</span>
+      </div>`;
+    console.error(err);
+  }
+})();
+</script>
+</body>
+</html>
