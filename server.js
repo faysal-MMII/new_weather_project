@@ -7,21 +7,21 @@ app.use(express.json());
 
 app.post('/api/forecast', async (req, res) => {
   try {
-    const response = await fetch('https://api.ollama.com/api/chat', {
-      method: 'POST',
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'qwen3.5:35b',
-        messages: [{ role: 'user', content: req.body.prompt }],
+        model: "deepseek-chat",
+        messages: [{ role: "user", content: req.body.prompt }],
         stream: false
       })
     });
 
     const data = await response.json();
-    res.json({ text: data.message?.content?.trim() || '' });
+    res.json({ text: data.choices[0].message.content?.trim() || '' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
