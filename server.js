@@ -16,6 +16,7 @@ app.post('/api/forecast', async (req, res) => {
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: [{ role: "user", content: req.body.prompt }],
+        max_tokens: 2000,
         stream: false
       })
     });
