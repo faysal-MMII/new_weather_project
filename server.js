@@ -22,8 +22,10 @@ app.post('/api/forecast', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log('DeepSeek response:', JSON.stringify(data));
     res.json({ text: data.choices[0].message.content?.trim() || '' });
   } catch (err) {
+    console.error('Error:', err.message, err.stack);
     res.status(500).json({ error: err.message });
   }
 });
