@@ -7,14 +7,14 @@ app.use(express.json());
 
 app.post('/api/forecast', async (req, res) => {
   try {
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "llama-3.3-70b-versatile",
         messages: [{ role: "user", content: req.body.prompt }],
         max_tokens: 2000,
         stream: false
@@ -22,7 +22,7 @@ app.post('/api/forecast', async (req, res) => {
     });
 
     const data = await response.json();
-    console.log('DeepSeek response:', JSON.stringify(data));
+    console.log('Groq response:', JSON.stringify(data));
     res.json({ text: data.choices[0].message.content?.trim() || '' });
   } catch (err) {
     console.error('Error:', err.message, err.stack);
