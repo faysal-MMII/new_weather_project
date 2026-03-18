@@ -986,26 +986,32 @@ function renderArticle(raw, ctx) {
       bodyHTML += `<h3>${heading}</h3>\n`;
       continue;
     }
-    // Map placeholder
-    if (trimmed.startsWith('[MAP:')) {
-      flushPara();
-      const desc = trimmed.replace(/^\[MAP:\s*/i, '').replace(/\]$/, '').trim();
-      bodyHTML += `
-        <div class="wp-block-image">
-          <figure>
-            <div style="background:#f0f0ee;border:1px solid #ddd;padding:48px 24px;text-align:center;">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" style="margin-bottom:10px;display:block;margin-left:auto;margin-right:auto">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
-              </svg>
-              <div style="font-family:var(--sans);font-size:0.82rem;color:#888;font-style:italic">${desc}</div>
-            </div>
-            <figcaption class="img-caption">${desc}</figcaption>
-          </figure>
-        </div>`;
-      continue;
+    // Map placeholder - enhanced version that handles mixed content
+    if (trimmed.includes('[MAP:')) {
+      const parts = trimmed.split(/(\[MAP:[^\]]+\])/);
+      for (const part of parts) {
+        if (part.startsWith('[MAP:')) {
+          flushPara();
+          const desc = part.replace(/^\[MAP:\s*/i, '').replace(/\]$/, '').trim();
+          bodyHTML += `
+            <div class="wp-block-image">
+              <figure>
+                <div style="background:#f0f0ee;border:1px solid #ddd;padding:48px 24px;text-align:center;">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" style="margin-bottom:10px;display:block;margin-left:auto;margin-right:auto">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+                  </svg>
+                  <div style="font-family:var(--sans);font-size:0.82rem;color:#888;font-style:italic">${desc}</div>
+                </div>
+                <figcaption class="img-caption">${desc}</figcaption>
+              </figure>
+            </div>`;
+        } else if (part.trim()) {
+          currentPara += (currentPara ? ' ' : '') + part.trim();
+        }
+      }
+    } else {
+      currentPara += (currentPara ? ' ' : '') + trimmed;
     }
-    // Regular text — accumulate into paragraph
-    currentPara += (currentPara ? ' ' : '') + trimmed;
   }
   flushPara();
 
