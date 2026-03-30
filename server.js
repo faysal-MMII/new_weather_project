@@ -91,7 +91,7 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ##
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile-fake',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 2000,
         stream: false
