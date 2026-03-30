@@ -331,6 +331,43 @@ img { max-width: 100%; height: auto; display: block; }
 
 .nav-btn:hover { background: var(--border); text-decoration: none; }
 
+/* ── Article Navigation Bar ── */
+#article-nav {
+  font-family: var(--sans);
+  padding: 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+#nav-prev, #nav-next {
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+#nav-prev:hover:not(:disabled), #nav-next:hover:not(:disabled) {
+  background: var(--bg-soft);
+  border-color: var(--link);
+}
+
+#nav-prev:disabled, #nav-next:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+#nav-date {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* ── Comments section ── */
 .comments-area {
   margin-top: 2.5em;
@@ -594,6 +631,9 @@ img { max-width: 100%; height: auto; display: block; }
   .entry-title { font-size: 1.4rem; }
   .nav-inner ul li a { padding: 9px 11px; font-size: 0.78rem; }
   .wp-block-image.alignright { float: none; max-width: 100%; margin: 1em 0; }
+  
+  #article-nav { flex-direction: column; gap: 12px; }
+  #nav-date { order: -1; }
 }
 
 /* ── Fade in on load ── */
@@ -663,6 +703,13 @@ img { max-width: 100%; height: auto; display: block; }
         </div>
       </div>
     </article>
+    
+    <!-- ── Article Navigation ── -->
+    <div id="article-nav" style="display:none;">
+      <button id="nav-prev" onclick="navigateArticle(-1)">← Older</button>
+      <span id="nav-date"></span>
+      <button id="nav-next" onclick="navigateArticle(1)">Newer →</button>
+    </div>
   </main>
 
   <!-- ── Sidebar ── -->
@@ -984,7 +1031,7 @@ function renderArticle(raw, ctx) {
       bodyHTML += `<h3>${heading}</h3>\n`;
       continue;
     }
-    // Map placeholder - enhanced version that handles mixed content
+    // Map placeholder
     if (trimmed.includes('[MAP:')) {
       const parts = trimmed.split(/(\[MAP:[^\]]+\])/);
       for (const part of parts) {
@@ -1066,11 +1113,7 @@ function renderArticle(raw, ctx) {
     </div>
   `;
 
-  // Generate a headline from the AI text
   generateHeadline(ctx);
-
-  // Update recent posts
-  updateRecentPosts(briefLine || ctx.condDesc);
 }
 
 function generateHeadline(ctx) {
@@ -1088,23 +1131,89 @@ function generateHeadline(ctx) {
   document.title = `${h} – ${SITE_NAME}`;
 }
 
-function updateRecentPosts(brief) {
-  const ul = document.getElementById('recent-posts');
-  const title = document.getElementById('post-title');
-  if (ul && title) {
-    ul.innerHTML = `
-      <li class="current"><a href="#" aria-current="page">${title.textContent}</a></li>
-      <li><a href="#">Yesterday's Abuja forecast</a></li>
-      <li><a href="#">Monday update: week ahead outlook</a></li>
-      <li><a href="#">Weekend summary: what happened</a></li>
-      <li><a href="#">Harmattan season guide for the FCT</a></li>
-    `;
+/* ── Archive Navigation ── */
+let articleDates = [];
+let currentDateIndex = 0;
+let weatherCtx = null;
+
+async function loadArticleDates() {
+  try {
+    const res = await fetch('https://api.github.com/repos/faysal-MMII/abuja-weather-articles/contents/articles', {
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    const files = await res.json();
+    articleDates = files
+      .filter(f => f.name.endsWith('.json'))
+      .map(f => f.name.replace('.json', ''))
+      .sort()
+      .reverse();
+
+    // Populate Recent Posts sidebar
+    const recentList = document.getElementById('recent-posts');
+    if (recentList && articleDates.length) {
+      recentList.innerHTML = articleDates.slice(0, 5).map((date, i) => `
+        <li class="${i === 0 ? 'current' : ''}">
+          <a href="#" onclick="jumpToArticle('${date}'); return false;">
+            ${new Date(date).toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}
+          </a>
+        </li>
+      `).join('');
+    }
+
+    // Show nav if more than one article
+    if (articleDates.length > 1) {
+      const nav = document.getElementById('article-nav');
+      if (nav) nav.style.display = 'flex';
+    }
+    updateNavButtons();
+  } catch(e) {
+    console.error('Failed to load article dates:', e);
   }
 }
 
-/* ── Regen handler ── */
-let weatherCtx = null;
+function updateNavButtons() {
+  const prev = document.getElementById('nav-prev');
+  const next = document.getElementById('nav-next');
+  const label = document.getElementById('nav-date');
+  if (prev) prev.disabled = currentDateIndex >= articleDates.length - 1;
+  if (next) next.disabled = currentDateIndex <= 0;
+  if (prev) prev.style.opacity = prev.disabled ? '0.3' : '1';
+  if (next) next.style.opacity = next.disabled ? '0.3' : '1';
+  if (label && articleDates[currentDateIndex]) {
+    label.textContent = new Date(articleDates[currentDateIndex]).toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long' });
+  }
+}
 
+async function loadArticleByDate(date) {
+  const url = `https://raw.githubusercontent.com/faysal-MMII/abuja-weather-articles/main/articles/${date}.json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Article not found');
+  const json = await res.json();
+  return json.article;
+}
+
+async function navigateArticle(direction) {
+  currentDateIndex += direction * -1;
+  if (currentDateIndex < 0) currentDateIndex = 0;
+  if (currentDateIndex >= articleDates.length) currentDateIndex = articleDates.length - 1;
+  const date = articleDates[currentDateIndex];
+  document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
+  const raw = await loadArticleByDate(date);
+  renderArticle(raw, weatherCtx);
+  updateNavButtons();
+  window.scrollTo(0, 0);
+}
+
+async function jumpToArticle(date) {
+  currentDateIndex = articleDates.indexOf(date);
+  document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
+  const raw = await loadArticleByDate(date);
+  renderArticle(raw, weatherCtx);
+  updateNavButtons();
+  window.scrollTo(0, 0);
+}
+
+/* ── Regen handler ── */
 async function handleRegen() {
   const btn = document.getElementById('regen-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
@@ -1131,6 +1240,8 @@ async function handleRegen() {
     const data = await fetchWeather();
     populateConditions(data);
     weatherCtx = buildContext(data);
+    
+    await loadArticleDates();
 
     // Try GitHub first
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
