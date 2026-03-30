@@ -65,6 +65,15 @@ async function generateAndSave() {
       `&timezone=Africa%2FLagos&forecast_days=7`
     );
     const weatherData = await weatherRes.json();
+    
+    // DEBUG: Log the raw Open-Meteo response to see what's coming back
+    console.log('Open-Meteo response:', JSON.stringify(weatherData));
+    
+    // Check if current data exists — if not, throw error with details
+    if (!weatherData.current) {
+      throw new Error('Open-Meteo returned no current data. Response: ' + JSON.stringify(weatherData));
+    }
+    
     const c = weatherData.current;
     const d = weatherData.daily;
     console.log('Weather data fetched successfully');
