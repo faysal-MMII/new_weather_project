@@ -309,63 +309,25 @@ img { max-width: 100%; height: auto; display: block; }
   margin-top: 6px;
 }
 
-/* ── Post navigation ── */
-.post-navigation {
-  margin-top: 2em;
-  padding-top: 1em;
-  border-top: 1px solid var(--border);
-  font-family: var(--sans);
-  font-size: 0.88rem;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.nav-btn {
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  padding: 6px 12px;
-  color: var(--link);
-  font-size: 0.82rem;
-}
-
-.nav-btn:hover { background: var(--border); text-decoration: none; }
-
-/* ── Article Navigation Bar ── */
+/* ── Article Navigation (Pagination) ── */
 #article-nav {
   font-family: var(--sans);
   padding: 24px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   border-top: 1px solid var(--border);
   margin-top: 20px;
 }
 
-#nav-prev, #nav-next {
-  cursor: pointer;
-  background: none;
-  border: 1px solid var(--border);
-  padding: 8px 16px;
-  font-family: var(--sans);
-  font-size: 0.9rem;
-  color: var(--text);
-  transition: all 0.2s ease;
+#pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-#nav-prev:hover:not(:disabled), #nav-next:hover:not(:disabled) {
+#pagination a:hover {
   background: var(--bg-soft);
-  border-color: var(--link);
-}
-
-#nav-prev:disabled, #nav-next:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-#nav-date {
-  font-size: 0.85rem;
-  color: var(--muted);
+  border-color: var(--link) !important;
 }
 
 /* ── Comments section ── */
@@ -632,8 +594,8 @@ img { max-width: 100%; height: auto; display: block; }
   .nav-inner ul li a { padding: 9px 11px; font-size: 0.78rem; }
   .wp-block-image.alignright { float: none; max-width: 100%; margin: 1em 0; }
   
-  #article-nav { flex-direction: column; gap: 12px; }
-  #nav-date { order: -1; }
+  #pagination { gap: 4px; }
+  #pagination a { font-size: 0.75rem; padding: 2px 6px; }
 }
 
 /* ── Fade in on load ── */
@@ -704,12 +666,10 @@ img { max-width: 100%; height: auto; display: block; }
       </div>
     </article>
     
-    <!-- ── Article Navigation ── -->
-    <div id="article-nav" style="display:none;">
-      <button id="nav-prev" onclick="navigateArticle(-1)">← Older</button>
-      <span id="nav-date"></span>
-      <button id="nav-next" onclick="navigateArticle(1)">Newer →</button>
-    </div>
+    <!-- ── Article Navigation (Pagination) ── -->
+    <nav id="article-nav" style="display:none;">
+      <div id="pagination" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"></div>
+    </nav>
   </main>
 
   <!-- ── Sidebar ── -->
@@ -1095,11 +1055,6 @@ function renderArticle(raw, ctx) {
       <p class="regen-note">Each generation pulls live weather data — articles vary each time.</p>
     </div>
 
-    <nav class="post-navigation">
-      <span style="font-family:var(--sans);font-size:0.82rem;color:var(--muted)">← Previous: </span>
-      <a class="nav-btn" href="#">Loading previous post…</a>
-    </nav>
-
     <div class="comments-area">
       <h2 class="comments-title">Notable Comments</h2>
       <ol class="comment-list" id="comments-list">
@@ -1160,11 +1115,6 @@ async function loadArticleDates() {
       `).join('');
     }
 
-    // Show nav if more than one article
-    if (articleDates.length > 1) {
-      const nav = document.getElementById('article-nav');
-      if (nav) nav.style.display = 'flex';
-    }
     updateNavButtons();
   } catch(e) {
     console.error('Failed to load article dates:', e);
@@ -1172,16 +1122,41 @@ async function loadArticleDates() {
 }
 
 function updateNavButtons() {
-  const prev = document.getElementById('nav-prev');
-  const next = document.getElementById('nav-next');
-  const label = document.getElementById('nav-date');
-  if (prev) prev.disabled = currentDateIndex >= articleDates.length - 1;
-  if (next) next.disabled = currentDateIndex <= 0;
-  if (prev) prev.style.opacity = prev.disabled ? '0.3' : '1';
-  if (next) next.style.opacity = next.disabled ? '0.3' : '1';
-  if (label && articleDates[currentDateIndex]) {
-    label.textContent = new Date(articleDates[currentDateIndex]).toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long' });
+  const nav = document.getElementById('article-nav');
+  const pagination = document.getElementById('pagination');
+  if (!nav || !pagination) return;
+
+  const total = articleDates.length;
+  if (total <= 1) { nav.style.display = 'none'; return; }
+  nav.style.display = 'block';
+
+  const current = currentDateIndex; // 0 = newest
+  let pages = new Set([0, total - 1, current]);
+  if (current > 0) pages.add(current - 1);
+  if (current < total - 1) pages.add(current + 1);
+  const sorted = [...pages].sort((a, b) => b - a); // newest first
+
+  let html = '';
+  let prev = null;
+  for (const i of sorted) {
+    if (prev !== null && prev - i > 1) html += `<span style="color:var(--muted)">…</span>`;
+    const isActive = i === current;
+    html += `<a href="#" onclick="jumpToIndex(${i}); return false;" style="
+      padding:4px 10px;
+      border:1px solid ${isActive ? 'var(--text)' : 'var(--border)'};
+      font-weight:${isActive ? '700' : '400'};
+      color:${isActive ? 'var(--text)' : 'var(--muted)'};
+      text-decoration:none;
+      font-size:0.85rem;
+    ">${total - i}</a>`;
+    prev = i;
   }
+
+  if (current < total - 1) {
+    html += `<a href="#" onclick="jumpToIndex(${current + 1}); return false;" style="color:var(--muted);text-decoration:none;font-size:0.85rem;padding:4px 8px;">Next →</a>`;
+  }
+
+  pagination.innerHTML = html;
 }
 
 async function loadArticleByDate(date) {
@@ -1206,6 +1181,16 @@ async function navigateArticle(direction) {
 
 async function jumpToArticle(date) {
   currentDateIndex = articleDates.indexOf(date);
+  document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
+  const raw = await loadArticleByDate(date);
+  renderArticle(raw, weatherCtx);
+  updateNavButtons();
+  window.scrollTo(0, 0);
+}
+
+async function jumpToIndex(index) {
+  currentDateIndex = index;
+  const date = articleDates[index];
   document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
   const raw = await loadArticleByDate(date);
   renderArticle(raw, weatherCtx);
