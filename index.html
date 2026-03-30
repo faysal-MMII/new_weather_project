@@ -934,14 +934,12 @@ WRITING INSTRUCTIONS:
 
 Output only the article text. No title, no byline, no extra commentary.`;
 
-  // CORRECTION: Use Render URL instead of Ollama API
   const response = await fetch("https://weather-project-237m.onrender.com/api/forecast", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt: prompt })
   });
 
-  // CORRECTION: Updated response parsing for Render API
   const data = await response.json();
   return data.text;
 }
@@ -1124,15 +1122,36 @@ async function handleRegen() {
     document.getElementById('article-container').innerHTML =
       `<p style="font-family:var(--sans);color:#c0392b;padding:20px 0">Failed to regenerate. Please try again.</p>`;
   }
+  if(btn) { btn.disabled = false; btn.textContent = '↻ Regenerate Forecast'; }
 }
 
-/* ── Boot ── */
+/* ── Boot Sequence with GitHub Cache First ── */
 (async () => {
   try {
     const data = await fetchWeather();
     populateConditions(data);
     weatherCtx = buildContext(data);
-    const raw  = await generateForecast(weatherCtx);
+
+    // Try GitHub first
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+    const githubUrl = `https://raw.githubusercontent.com/faysal-MMII/abuja-weather-articles/main/articles/${today}.json`;
+
+    let raw;
+    try {
+      const cached = await fetch(githubUrl);
+      if (cached.ok) {
+        const json = await cached.json();
+        raw = json.article;
+        console.log('Loaded article from GitHub cache');
+      }
+    } catch (_) {}
+
+    // Fall back to Groq if no cached article
+    if (!raw) {
+      console.log('No cached article found, generating fresh...');
+      raw = await generateForecast(weatherCtx);
+    }
+
     document.getElementById('loading').style.display = 'none';
     renderArticle(raw, weatherCtx);
   } catch(err) {
