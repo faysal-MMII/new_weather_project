@@ -112,7 +112,11 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ##
 
     // Step 4: Save to GitHub
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+    console.log('Attempting GitHub save for date:', dateStr);
+    console.log('GITHUB_REPO:', process.env.GITHUB_REPO);
+    console.log('GITHUB_TOKEN set:', !!process.env.GITHUB_TOKEN);
     await saveArticleToGitHub(article, dateStr);
+    console.log('GitHub save completed');
 
   } catch (err) {
     console.error('Generation failed:', err.message);
