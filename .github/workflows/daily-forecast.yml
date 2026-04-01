@@ -1,0 +1,14 @@
+name: Daily Forecast Generation
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # 6am WAT = 5am UTC
+  workflow_dispatch:       # allows manual trigger from GitHub UI
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger forecast generation
+        run: |
+          curl -f --max-time 60 https://weather-project-237m.onrender.com/api/generate
