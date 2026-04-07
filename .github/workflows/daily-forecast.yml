@@ -2,8 +2,9 @@ name: Daily Forecast Generation
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # 6am WAT = 5am UTC
-  workflow_dispatch:       # allows manual trigger from GitHub UI
+    - cron: '30 3 * * 1-5'  # 4:30am UTC = 5:30am WAT, weekdays only
+    - cron: '0 4 * * 1-5'   # 5:00am UTC = 6:00am WAT backup, weekdays only
+  workflow_dispatch:
 
 jobs:
   generate:
@@ -11,4 +12,19 @@ jobs:
     steps:
       - name: Trigger forecast generation
         run: |
-          curl -f --max-time 60 https://weather-project-237m.onrender.com/api/generate
+          curl -f --max-time 90 --retry 3 --retry-delay 15 \
+            https://weather-project-237m.onrender.com/api/generate
+          echo "Generation triggered successfully"
+
+      - name: Verify article was saved
+        run: |
+          DATE=$(TZ="Africa/Lagos" date +%Y-%m-%d)
+          echo "Checking for article: $DATE"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://raw.githubusercontent.com/faysal-MMII/abuja-weather-articles/main/articles/${DATE}.json")
+          if [ "$STATUS" = "200" ]; then
+            echo "Article confirmed saved for $DATE"
+          else
+            echo "ERROR: Article not found for $DATE (HTTP $STATUS)"
+            exit 1
+          fi
