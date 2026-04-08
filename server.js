@@ -6,6 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Weather cache
+let weatherCache = null;
+let weatherCacheTime = 0;
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
 async function saveArticleToGitHub(article, dateStr) {
   const filename = `articles/${dateStr}.json`;
   const content = Buffer.from(JSON.stringify({
@@ -151,6 +156,46 @@ app.post('/api/forecast', async (req, res) => {
   } catch (err) {
     console.error('Error:', err.message, err.stack);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// New /api/weather endpoint with 30-minute cache
+app.get('/api/weather', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (weatherCache && (now - weatherCacheTime) < CACHE_DURATION) {
+      return res.json(weatherCache);
+    }
+
+    const LAT = 9.0765, LON = 7.3986;
+
+    const today = new Date();
+    const past = new Date(today);
+    past.setDate(today.getDate() - 7);
+    const fmt = d => d.toISOString().split('T')[0];
+
+    const [forecast, historical] = await Promise.all([
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,` +
+        `wind_speed_10m,wind_direction_10m,surface_pressure,uv_index` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,` +
+        `precipitation_probability_max,precipitation_sum` +
+        `&timezone=Africa%2FLagos&forecast_days=7&wind_speed_unit=kmh`
+      ).then(r => r.json()),
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum` +
+        `&timezone=Africa%2FLagos&start_date=${fmt(past)}&end_date=${fmt(today)}`
+      ).then(r => r.json())
+    ]);
+
+    weatherCache = { forecast, historical };
+    weatherCacheTime = now;
+
+    res.json(weatherCache);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch weather data', detail: err.message });
   }
 });
 

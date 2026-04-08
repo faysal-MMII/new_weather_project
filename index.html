@@ -799,32 +799,14 @@ function stepActive(n) {
   if (el) el.classList.add('active');
 }
 
-/* ── Fetch weather ── */
+/* ── Fetch weather from backend API with 30-minute cache ── */
 async function fetchWeather() {
   stepActive(1);
-  const forecast = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,` +
-    `wind_speed_10m,wind_direction_10m,surface_pressure,uv_index` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,` +
-    `precipitation_probability_max,precipitation_sum` +
-    `&timezone=Africa%2FLagos&forecast_days=7&wind_speed_unit=kmh`
-  ).then(r => r.json());
-
+  const data = await fetch('https://weather-project-237m.onrender.com/api/weather')
+    .then(r => r.json());
   stepActive(2);
-  // Past 7 days
-  const today = new Date();
-  const past  = new Date(today); past.setDate(today.getDate() - 7);
-  const fmt   = d => d.toISOString().split('T')[0];
-
   stepActive(3);
-  const historical = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum` +
-    `&timezone=Africa%2FLagos&start_date=${fmt(past)}&end_date=${fmt(today)}`
-  ).then(r => r.json());
-
-  return { forecast, historical };
+  return data;
 }
 
 /* ── Populate sidebar conditions ── */
