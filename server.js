@@ -275,7 +275,7 @@ app.post('/api/forecast', async (req, res) => {
   }
 });
 
-// /api/weather endpoint with 30-minute cache
+// /api/weather endpoint with 30-minute cache and error guard
 app.get('/api/weather', async (req, res) => {
   try {
     const now = Date.now();
@@ -306,11 +306,18 @@ app.get('/api/weather', async (req, res) => {
       ).then(r => r.json())
     ]);
 
+    // Guard: Check for errors before caching
+    if (forecast.error || historical.error) {
+      console.error('Weather API returned error:', { forecastError: forecast.error, historicalError: historical.error });
+      return res.status(503).json({ error: 'Weather data temporarily unavailable' });
+    }
+
     weatherCache = { forecast, historical };
     weatherCacheTime = now;
 
     res.json(weatherCache);
   } catch (err) {
+    console.error('Weather endpoint error:', err.message);
     res.status(500).json({ error: 'Failed to fetch weather data', detail: err.message });
   }
 });

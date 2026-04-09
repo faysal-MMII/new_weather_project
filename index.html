@@ -109,6 +109,15 @@ body {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+.error-message {
+  text-align: center;
+  padding: 3rem;
+}
+.error-message span {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
 </style>
 </head>
 <body class="relative">
@@ -131,7 +140,7 @@ body {
 </header>
 
 <!-- Main -->
-<main class="pt-24 pb-32 px-6 max-w-5xl mx-auto space-y-10">
+<main id="main-content" class="pt-24 pb-32 px-6 max-w-5xl mx-auto space-y-10">
 
   <!-- Hero -->
   <section class="relative py-8">
@@ -253,6 +262,18 @@ body {
     </div>
   </section>
 
+  <!-- Error State (hidden by default) -->
+  <div id="error-state" class="hidden glass-card rounded-3xl p-10 text-center">
+    <div class="flex flex-col items-center gap-4">
+      <span class="material-symbols-outlined text-5xl text-red-400" style="font-variation-settings:'FILL' 1;">cloud_off</span>
+      <h3 class="font-headline font-bold text-xl text-white">Unable to Load Weather Data</h3>
+      <p class="font-body text-on-surface-variant text-sm max-w-md">The weather service is temporarily unavailable. Please try again shortly.</p>
+      <button onclick="location.reload()" class="mt-2 px-5 py-2 bg-primary/20 border border-primary/30 rounded-full text-primary text-sm font-semibold hover:bg-primary/30 transition-colors">
+        Retry
+      </button>
+    </div>
+  </div>
+
 </main>
 
 <!-- Bottom Nav - Current, Alerts, Articles (NO FORECAST) -->
@@ -313,6 +334,14 @@ function dayLabel(isoStr, i) {
   if (i === 0) return 'Today';
   if (i === 1) return 'Tomorrow';
   return new Date(isoStr + 'T12:00:00').toLocaleDateString('en-NG', { weekday: 'short' });
+}
+
+function showErrorState() {
+  // Hide all weather content sections
+  const sections = document.querySelectorAll('#main-content > section:not(#error-state)');
+  sections.forEach(section => section.classList.add('hidden'));
+  // Show error state
+  document.getElementById('error-state').classList.remove('hidden');
 }
 
 /* ── Fetch from server cache ── */
@@ -438,7 +467,22 @@ function populateWeekly(daily) {
 (async () => {
   try {
     const data = await fetchWeather();
+    
+    // Check for error response from server
+    if (data.error || !data.forecast?.current) {
+      console.error('Weather data unavailable:', data.error);
+      throw new Error(data.error || 'Weather data unavailable');
+    }
+    
     const { current, daily } = data.forecast;
+
+    // Hide error state if visible, show content
+    document.getElementById('error-state').classList.add('hidden');
+    document.querySelectorAll('#main-content > section').forEach(section => {
+      if (section.id !== 'error-state') {
+        section.classList.remove('hidden');
+      }
+    });
 
     populateHero(current, daily);
     populateAlert(daily);
@@ -447,8 +491,7 @@ function populateWeekly(daily) {
     populateWeekly(daily);
   } catch(err) {
     console.error('Failed to load weather:', err);
-    document.getElementById('hero-temp').textContent = '--°';
-    document.getElementById('hero-condition').textContent = 'Unable to load';
+    showErrorState();
   }
 })();
 </script>
