@@ -1,762 +1,277 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Abuja Weather</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-/* ── Reset & Base ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --text:       #1a1a1a;
-  --muted:      #666;
-  --link:       #4c649c;
-  --border:     #e0e0e0;
-  --bg:         #ffffff;
-  --bg-soft:    #f7f7f5;
-  --brief-bg:   #eef2f7;
-  --brief-border: #4c649c;
-  --accent:     #c0392b;
-  --max:        1100px;
-  --serif:      'Lora', Georgia, 'Times New Roman', serif;
-  --sans:       'Source Sans 3', 'Source Sans Pro', Arial, sans-serif;
-}
-
-html { font-size: 17px; }
-
-body {
-  font-family: var(--serif);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.7;
-}
-
-a { color: var(--link); text-decoration: none; }
-a:hover { text-decoration: underline; }
-img { max-width: 100%; height: auto; display: block; }
-
-/* ── Site Header ── */
-.site-header {
-  border-bottom: 3px solid var(--text);
-  padding: 18px 20px 14px;
-  text-align: center;
-  background: var(--bg);
-}
-
-.site-title {
-  font-family: var(--serif);
-  font-size: 2.4rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: var(--text);
-  line-height: 1.1;
-}
-
-.site-title a { color: var(--text); }
-.site-title a:hover { text-decoration: none; }
-
-.site-description {
-  font-family: var(--sans);
-  font-style: italic;
-  font-size: 0.88rem;
-  color: var(--muted);
-  margin-top: 4px;
-  font-weight: 400;
-}
-
-/* ── Primary Nav ── */
-.main-navigation {
-  background: var(--bg-soft);
-  border-bottom: 1px solid var(--border);
-}
-
-.nav-inner {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-inner ul {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-}
-
-.nav-inner ul li a {
-  display: block;
-  font-family: var(--sans);
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text);
-  padding: 11px 16px;
-  transition: background 0.15s;
-}
-
-.nav-inner ul li a:hover,
-.nav-inner ul li a.current {
-  background: var(--text);
-  color: #fff;
-  text-decoration: none;
-}
-
-/* ── Page Layout ── */
-.site-content {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 32px 20px 60px;
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 48px;
-  align-items: start;
-}
-
-/* ── Article ── */
-.entry-header { margin-bottom: 10px; }
-
-.entry-title {
-  font-family: var(--serif);
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.3px;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-
-.entry-meta {
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  color: var(--muted);
-  margin-bottom: 20px;
-}
-
-.entry-meta a { color: var(--muted); }
-.entry-meta a:hover { color: var(--link); text-decoration: underline; }
-
-.entry-meta .byline { margin-left: 4px; }
-
-/* ── In Brief box — exactly like SCW ── */
-.in-brief {
-  background: var(--brief-bg);
-  border-left: 4px solid var(--brief-border);
-  padding: 14px 18px;
-  margin-bottom: 24px;
-  font-family: var(--sans);
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--text);
-}
-
-.in-brief strong { color: var(--text); }
-
-/* ── Article body ── */
-.entry-content { font-size: 1rem; line-height: 1.75; }
-
-.entry-content p { margin-bottom: 1.2em; }
-
-.entry-content h3 {
-  font-family: var(--serif);
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 1.8em 0 0.5em;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-}
-
-/* Inline map/image blocks — like SCW's weather map images */
-.wp-block-image {
-  margin: 1.5em 0;
-}
-
-.wp-block-image img {
-  width: 100%;
-  border: 1px solid var(--border);
-}
-
-.wp-block-image figcaption,
-.img-caption {
-  font-family: var(--sans);
-  font-size: 0.82rem;
-  color: var(--muted);
-  margin-top: 5px;
-  font-style: italic;
-}
-
-.wp-block-image.alignright {
-  float: right;
-  margin: 0 0 1em 1.5em;
-  max-width: 280px;
-}
-
-.wp-block-image.alignright img { width: 100%; }
-
-/* ── Loading state ── */
-.loading-state {
-  padding: 48px 0;
-  text-align: center;
-  font-family: var(--sans);
-  color: var(--muted);
-}
-
-.loading-steps {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 320px;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: left;
-}
-
-.loading-step {
-  font-size: 0.88rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  opacity: 0.3;
-  transition: opacity 0.3s;
-}
-
-.loading-step.active { opacity: 1; color: var(--text); }
-.loading-step.done { opacity: 0.5; }
-
-.step-indicator {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--border);
-  flex-shrink: 0;
-  transition: background 0.3s;
-}
-
-.loading-step.active .step-indicator { background: var(--link); }
-.loading-step.done .step-indicator { background: #2ecc71; }
-
-.spinner {
-  width: 32px; height: 32px;
-  border: 2px solid var(--border);
-  border-top-color: var(--link);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 16px;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Share row ── */
-.scw-share-row {
-  margin-top: 1.5em;
-  padding-top: 1em;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.share-btn {
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  color: var(--muted);
-  cursor: pointer;
-  background: var(--bg);
-  text-decoration: none;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.share-btn:hover { border-color: var(--text); color: var(--text); text-decoration: none; }
-
-/* ── Regenerate button ── */
-.regen-wrap {
-  margin-top: 2em;
-  padding-top: 1.2em;
-  border-top: 2px solid var(--text);
-}
-
-.btn-regen {
-  font-family: var(--sans);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--text);
-  color: #fff;
-  border: none;
-  padding: 9px 20px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.btn-regen:hover { background: var(--link); }
-.btn-regen:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.regen-note {
-  font-family: var(--sans);
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-top: 6px;
-}
-
-/* ── Article Navigation (Pagination) ── */
-#article-nav {
-  font-family: var(--sans);
-  padding: 24px 0;
-  border-top: 1px solid var(--border);
-  margin-top: 20px;
-}
-
-#pagination {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-#pagination a:hover {
-  background: var(--bg-soft);
-  border-color: var(--link) !important;
-}
-
-/* ── Comments section ── */
-.comments-area {
-  margin-top: 2.5em;
-  padding-top: 1.5em;
-  border-top: 2px solid var(--text);
-}
-
-.comments-title {
-  font-family: var(--sans);
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 1.2em;
-  color: var(--text);
-}
-
-.comment-list { list-style: none; }
-
-.comment-body {
-  border-bottom: 1px solid var(--border);
-  padding: 14px 0;
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  font-weight: 400;
-}
-
-.comment-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.comment-avatar {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: var(--link);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--sans);
-  font-size: 0.85rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.comment-author-name {
-  font-weight: 700;
-  color: var(--link);
-  font-size: 0.9rem;
-}
-
-.comment-date {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.comment-text { line-height: 1.6; color: var(--text); }
-
-.discourse-link {
-  margin-top: 1.2em;
-  font-family: var(--sans);
-  font-size: 0.9rem;
-}
-
-/* ── Sidebar ── */
-.sidebar { font-family: var(--sans); }
-
-.widget {
-  margin-bottom: 28px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid var(--border);
-}
-
-.widget:last-child { border-bottom: none; }
-
-.widget-title {
-  font-family: var(--sans);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text);
-  text-align: center;
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--text);
-}
-
-/* Current conditions widget */
-.conditions-widget {
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  padding: 16px;
-  text-align: center;
-}
-
-.conditions-temp {
-  font-family: var(--serif);
-  font-size: 3rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text);
-}
-
-.conditions-desc {
-  font-size: 0.95rem;
-  color: var(--muted);
-  margin: 4px 0 12px;
-  font-style: italic;
-}
-
-.conditions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  text-align: left;
-  margin-top: 10px;
-}
-
-.cond-item {
-  font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.cond-item strong {
-  display: block;
-  font-size: 1rem;
-  color: var(--text);
-  font-weight: 700;
-}
-
-/* Newsletter */
-.newsletter-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.newsletter-form input[type="email"] {
-  font-family: var(--sans);
-  font-size: 0.9rem;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  width: 100%;
-  outline: none;
-}
-
-.newsletter-form input[type="email"]:focus {
-  border-color: var(--link);
-}
-
-.newsletter-form button {
-  font-family: var(--sans);
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--text);
-  color: #fff;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.newsletter-form button:hover { background: var(--link); }
-
-.newsletter-subcount {
-  font-size: 0.8rem;
-  color: var(--muted);
-  text-align: right;
-  margin-top: 2px;
-}
-
-/* Recent posts */
-.recent-posts { list-style: none; }
-
-.recent-posts li {
-  border-bottom: 1px solid var(--border);
-  padding: 8px 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.recent-posts li:first-child { border-top: 0; }
-.recent-posts li:last-child { border-bottom: 0; }
-.recent-posts li a { color: var(--text); }
-.recent-posts li a:hover { color: var(--link); }
-.recent-posts li.current a { color: var(--link); font-weight: 600; }
-
-/* Categories */
-.cat-list { list-style: none; }
-.cat-list li {
-  font-size: 0.9rem;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border);
-}
-.cat-list li:last-child { border-bottom: 0; }
-
-/* About widget */
-.about-text {
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.about-text strong { color: var(--text); }
-
-/* App download */
-.app-badges {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-}
-
-.app-badge {
-  display: inline-block;
-  background: var(--text);
-  color: #fff;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 8px 20px;
-  text-align: center;
-  letter-spacing: 0.02em;
-  transition: background 0.15s;
-  width: 100%;
-  text-decoration: none;
-}
-
-.app-badge:hover { background: var(--link); text-decoration: none; color: #fff; }
-.app-badge.coming-soon { background: var(--muted); cursor: default; }
-.app-badge.coming-soon:hover { background: var(--muted); }
-
-/* ── Footer ── */
-.site-footer {
-  background: var(--bg-soft);
-  border-top: 1px solid var(--border);
-  padding: 20px;
-  text-align: center;
-  font-family: var(--sans);
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-.site-footer a { color: var(--muted); text-decoration: underline; }
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-  .site-content {
-    grid-template-columns: 1fr;
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "on-tertiary-fixed": "#2b1700",
+        "on-secondary": "#1b247f",
+        "surface-dim": "#0f1418",
+        "on-primary-fixed": "#001f24",
+        "primary-fixed": "#9cf0ff",
+        "primary-container": "#00e5ff",
+        "on-error": "#690005",
+        "outline": "#849396",
+        "inverse-primary": "#006875",
+        "surface-container-highest": "#30353a",
+        "on-error-container": "#ffdad6",
+        "outline-variant": "#3b494c",
+        "secondary-fixed": "#e0e0ff",
+        "primary": "#c3f5ff",
+        "inverse-surface": "#dfe3e9",
+        "secondary-container": "#343d96",
+        "surface-container": "#1b2024",
+        "on-primary": "#00363d",
+        "error-container": "#93000a",
+        "on-primary-container": "#00626e",
+        "on-tertiary-container": "#804e00",
+        "surface-container-high": "#262b2f",
+        "on-surface": "#dfe3e9",
+        "on-secondary-container": "#a8afff",
+        "tertiary": "#ffe9d5",
+        "on-secondary-fixed-variant": "#343d96",
+        "on-background": "#dfe3e9",
+        "surface-tint": "#00daf3",
+        "inverse-on-surface": "#2c3135",
+        "on-secondary-fixed": "#000767",
+        "background": "#0f1418",
+        "secondary": "#bdc2ff",
+        "tertiary-container": "#ffc687",
+        "on-primary-fixed-variant": "#004f58",
+        "error": "#ffb4ab",
+        "surface-container-low": "#171c20",
+        "secondary-fixed-dim": "#bdc2ff",
+        "primary-fixed-dim": "#00daf3",
+        "on-surface-variant": "#bac9cc",
+        "surface-container-lowest": "#0a0f13",
+        "on-tertiary": "#482900",
+        "tertiary-fixed-dim": "#ffb866",
+        "on-tertiary-fixed-variant": "#673d00",
+        "surface-bright": "#353a3e",
+        "tertiary-fixed": "#ffddba",
+        "surface-variant": "#30353a",
+        "surface": "#0f1418"
+      },
+      fontFamily: {
+        "headline": ["Space Grotesk"],
+        "body": ["Inter"],
+        "label": ["Inter"]
+      },
+      borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+    }
   }
-
-  .sidebar { border-top: 2px solid var(--text); padding-top: 28px; }
-
-  .site-title { font-size: 1.8rem; }
-  .entry-title { font-size: 1.4rem; }
-  .nav-inner ul li a { padding: 9px 11px; font-size: 0.78rem; }
-  .wp-block-image.alignright { float: none; max-width: 100%; margin: 1em 0; }
-  
-  #pagination { gap: 4px; }
-  #pagination a { font-size: 0.75rem; padding: 2px 6px; }
 }
-
-/* ── Fade in on load ── */
-.entry-header, .in-brief, .entry-content {
-  animation: fadeUp 0.4s ease both;
+</script>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #0f1418;
+  background-image: linear-gradient(135deg, #0f1418 0%, #141e26 50%, #0f1418 100%);
+  font-family: "Inter", sans-serif;
+  color: #dfe3e9;
 }
-.in-brief { animation-delay: 0.05s; }
-.entry-content { animation-delay: 0.1s; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+.overlay-dim {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(15,20,24,0.4), rgba(15,20,24,0.7));
+}
+.glass-card {
+  background: rgba(15, 20, 24, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>
 </head>
-<body>
+<body class="relative">
+<div class="overlay-dim"></div>
 
-<!-- ── Site Header ── -->
-<header class="site-header">
-  <h1 class="site-title"><a href="#" id="site-title-link">Abuja Weather</a></h1>
-  <p class="site-description">Honest, hype-free forecasts for the Federal Capital Territory</p>
+<!-- Header -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-6 bg-transparent">
+  <div class="flex items-center gap-4">
+    <button class="scale-95 active:transition-transform hover:opacity-80 transition-opacity">
+      <span class="material-symbols-outlined text-white">menu</span>
+    </button>
+    <h1 class="font-headline font-bold tracking-tight text-xl text-white">Abuja</h1>
+  </div>
+  <div class="flex items-center gap-3">
+    <span id="last-updated" class="font-body text-xs text-on-surface-variant hidden"></span>
+    <button class="scale-95 active:transition-transform hover:opacity-80 transition-opacity">
+      <span class="material-symbols-outlined text-white">search</span>
+    </button>
+  </div>
 </header>
 
-<!-- ── Navigation ── -->
-<nav class="main-navigation">
-  <div class="nav-inner">
-    <ul>
-      <li><a href="#" class="current">Home</a></li>
-      <li><a href="#">About Us</a></li>
-      <li><a href="#">NiMet Alerts</a></li>
-      <li><a href="#">FCT Flood Guide</a></li>
-      <li><a href="#">Contact</a></li>
-      <li><a href="#">Other Nigerian Sites</a></li>
-    </ul>
-  </div>
+<!-- Main -->
+<main class="pt-24 pb-32 px-6 max-w-5xl mx-auto space-y-10">
+
+  <!-- Hero -->
+  <section class="relative py-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div class="space-y-1">
+        <p id="hero-condition" class="font-headline font-medium text-secondary text-lg tracking-wider drop-shadow-lg">
+          <span class="skeleton inline-block w-32 h-6">&nbsp;</span>
+        </p>
+        <h2 id="hero-temp" class="font-headline font-bold text-8xl md:text-9xl text-primary leading-none -ml-1 drop-shadow-2xl">
+          --°
+        </h2>
+      </div>
+      <div class="md:text-right">
+        <p id="hero-feels" class="font-body text-on-surface-variant text-sm uppercase tracking-[0.2em] mb-2 drop-shadow-md">
+          Feels like --°
+        </p>
+        <div class="flex items-center md:justify-end gap-2 text-tertiary drop-shadow-md">
+          <span class="material-symbols-outlined text-orange-400" style="font-variation-settings:'FILL' 1;">light_mode</span>
+          <span id="hero-hilo" class="font-headline font-medium text-2xl tracking-tight">H: --° L: --°</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alert Card (shown if weather alert is active) -->
+  <section id="alert-card" class="glass-card rounded-2xl p-5 border-tertiary/20 bg-tertiary-container/10 relative overflow-hidden hidden">
+    <div class="flex gap-4 items-start">
+      <div class="bg-tertiary-fixed text-on-tertiary-fixed p-3 rounded-xl shadow-lg">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">warning</span>
+      </div>
+      <div>
+        <h3 id="alert-title" class="font-headline font-bold text-tertiary tracking-wide"></h3>
+        <p id="alert-msg" class="font-body text-on-surface-variant text-sm mt-1 leading-relaxed"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hourly Forecast -->
+  <section class="space-y-4">
+    <h3 class="font-headline font-bold text-lg tracking-tight px-1 drop-shadow-md">Hourly Forecast</h3>
+    <div id="hourly-container" class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+      <!-- Skeletons -->
+      <div class="glass-card min-w-[100px] p-4 rounded-2xl flex flex-col items-center gap-3">
+        <span class="skeleton w-12 h-3">&nbsp;</span>
+        <span class="skeleton w-8 h-8 rounded-full">&nbsp;</span>
+        <span class="skeleton w-10 h-5">&nbsp;</span>
+      </div>
+      <div class="glass-card min-w-[100px] p-4 rounded-2xl flex flex-col items-center gap-3">
+        <span class="skeleton w-12 h-3">&nbsp;</span>
+        <span class="skeleton w-8 h-8 rounded-full">&nbsp;</span>
+        <span class="skeleton w-10 h-5">&nbsp;</span>
+      </div>
+      <div class="glass-card min-w-[100px] p-4 rounded-2xl flex flex-col items-center gap-3">
+        <span class="skeleton w-12 h-3">&nbsp;</span>
+        <span class="skeleton w-8 h-8 rounded-full">&nbsp;</span>
+        <span class="skeleton w-10 h-5">&nbsp;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conditions Grid -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-card p-5 rounded-3xl space-y-4">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined text-sm text-blue-400">humidity_percentage</span>
+        <span class="font-label text-xs uppercase tracking-widest font-semibold">Humidity</span>
+      </div>
+      <p id="cond-humidity" class="font-headline font-bold text-3xl">--%</p>
+      <p id="cond-humidity-sub" class="font-body text-[10px] text-on-surface-variant leading-tight">Loading…</p>
+    </div>
+    <div class="glass-card p-5 rounded-3xl space-y-4">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined text-sm text-teal-200">air</span>
+        <span class="font-label text-xs uppercase tracking-widest font-semibold">Wind</span>
+      </div>
+      <p id="cond-wind" class="font-headline font-bold text-3xl">--<span class="text-sm font-normal ml-1">km/h</span></p>
+      <p id="cond-wind-sub" class="font-body text-[10px] text-on-surface-variant leading-tight">Loading…</p>
+    </div>
+    <div class="glass-card p-5 rounded-3xl space-y-4">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined text-sm text-orange-300">wb_sunny</span>
+        <span class="font-label text-xs uppercase tracking-widest font-semibold">UV Index</span>
+      </div>
+      <p id="cond-uv" class="font-headline font-bold text-3xl">--</p>
+      <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+        <div id="cond-uv-bar" class="h-full bg-gradient-to-r from-primary to-tertiary" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="glass-card p-5 rounded-3xl space-y-4">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined text-sm text-slate-300">thermostat</span>
+        <span class="font-label text-xs uppercase tracking-widest font-semibold">Pressure</span>
+      </div>
+      <p id="cond-pressure" class="font-headline font-bold text-3xl">--<span class="text-sm font-normal ml-1">hPa</span></p>
+      <p class="font-body text-[10px] text-on-surface-variant leading-tight">Surface pressure</p>
+    </div>
+  </section>
+
+  <!-- Weekly Forecast -->
+  <section class="glass-card rounded-3xl p-6 space-y-6">
+    <h3 class="font-headline font-bold text-lg tracking-tight">7-Day Forecast</h3>
+    <div id="weekly-container" class="space-y-4">
+      <!-- Populated by JS -->
+      <div class="flex items-center justify-between">
+        <span class="skeleton w-16 h-4">&nbsp;</span>
+        <span class="skeleton w-6 h-6 rounded-full">&nbsp;</span>
+        <span class="skeleton w-24 h-4">&nbsp;</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="skeleton w-16 h-4">&nbsp;</span>
+        <span class="skeleton w-6 h-6 rounded-full">&nbsp;</span>
+        <span class="skeleton w-24 h-4">&nbsp;</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="skeleton w-16 h-4">&nbsp;</span>
+        <span class="skeleton w-6 h-6 rounded-full">&nbsp;</span>
+        <span class="skeleton w-24 h-4">&nbsp;</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Bottom Nav - Current, Alerts, Articles (NO FORECAST) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 backdrop-blur-3xl border-t border-white/10 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(0,0,0,0.5)] bg-white/5">
+  <a class="flex flex-col items-center justify-center text-cyan-400 bg-white/10 rounded-2xl px-4 py-2 scale-95 active:scale-90 transition-all" href="index.html">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">cloud</span>
+    <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">Current</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-amber-400 px-4 py-2 hover:opacity-80 transition-opacity scale-95 active:scale-90" href="alerts.html">
+    <span class="material-symbols-outlined">warning</span>
+    <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">Alerts</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-purple-400 px-4 py-2 hover:opacity-80 transition-opacity scale-95 active:scale-90" href="articles.html">
+    <span class="material-symbols-outlined">newspaper</span>
+    <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">Articles</span>
+  </a>
 </nav>
 
-<!-- ── Page ── -->
-<div class="site-content">
-
-  <!-- ── Main Article Column ── -->
-  <main id="main">
-    <article id="post-1">
-      <div id="article-container">
-        <!-- Loading state -->
-        <div class="loading-state" id="loading">
-          <div class="spinner"></div>
-          <div style="font-family:var(--sans);font-size:0.9rem;color:var(--muted)">Preparing today's forecast…</div>
-          <div class="loading-steps">
-            <div class="loading-step active" id="step-1">
-              <div class="step-indicator"></div>
-              <span>Fetching current Abuja conditions…</span>
-            </div>
-            <div class="loading-step" id="step-2">
-              <div class="step-indicator"></div>
-              <span>Pulling 7-day ECMWF forecast…</span>
-            </div>
-            <div class="loading-step" id="step-3">
-              <div class="step-indicator"></div>
-              <span>Reviewing the past week…</span>
-            </div>
-            <div class="loading-step" id="step-4">
-              <div class="step-indicator"></div>
-              <span>Writing today's post…</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </article>
-    
-    <!-- ── Article Navigation (Pagination) ── -->
-    <nav id="article-nav" style="display:none;">
-      <div id="pagination" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;"></div>
-    </nav>
-  </main>
-
-  <!-- ── Sidebar ── -->
-  <aside class="sidebar">
-
-    <!-- Current Conditions -->
-    <div class="widget">
-      <h2 class="widget-title">Current Conditions</h2>
-      <div class="conditions-widget">
-        <div class="conditions-temp" id="sw-temp">--°C</div>
-        <div class="conditions-desc" id="sw-desc">Loading…</div>
-        <div class="conditions-grid">
-          <div class="cond-item"><strong id="sw-feels">--°C</strong>Feels like</div>
-          <div class="cond-item"><strong id="sw-humidity">--%</strong>Humidity</div>
-          <div class="cond-item"><strong id="sw-wind">-- km/h</strong>Wind</div>
-          <div class="cond-item"><strong id="sw-uv">--</strong>UV Index</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Newsletter -->
-    <div class="widget">
-      <h2 class="widget-title">Get Abuja Weather in your inbox!</h2>
-      <div class="newsletter-form">
-        <input type="email" placeholder="Type your email…">
-        <button type="button">Subscribe</button>
-      </div>
-      <div class="newsletter-subcount" id="sub-count"></div>
-    </div>
-
-    <!-- Get the App -->
-    <div class="widget">
-      <h2 class="widget-title">Get the App</h2>
-      <div class="app-badges">
-        <a href="#" class="app-badge">▶ Download on Android</a>
-        <a href="#" class="app-badge coming-soon">🍎 iOS — Coming Soon</a>
-      </div>
-    </div>
-
-    <!-- Recent Posts -->
-    <div class="widget">
-      <h2 class="widget-title">Recent Posts</h2>
-      <ul class="recent-posts" id="recent-posts">
-        <li class="current"><a href="#">Today's forecast loading…</a></li>
-      </ul>
-    </div>
-
-    <!-- Categories -->
-    <div class="widget">
-      <h2 class="widget-title">Categories</h2>
-      <ul class="cat-list">
-        <li><a href="#">Abuja Weather</a></li>
-        <li><a href="#">Harmattan Season</a></li>
-        <li><a href="#">Rainy Season</a></li>
-        <li><a href="#">Severe Weather</a></li>
-        <li><a href="#">Nigeria Weather</a></li>
-        <li><a href="#">Weather Explained</a></li>
-        <li><a href="#">FCT Flood Watch</a></li>
-      </ul>
-    </div>
-
-    <!-- About -->
-    <div class="widget">
-      <h2 class="widget-title">About This Site</h2>
-      <p class="about-text">
-        <strong>Abuja Weather</strong> delivers daily, hype-free forecasts for the Federal Capital Territory — written in plain language, with no panic and no filler.<br><br>
-        Weather data is sourced from <strong>Open-Meteo</strong> (ECMWF IFS model). Because Nigeria has limited ground radar, forecasts rely on satellite-derived precipitation data and numerical weather models.<br><br>
-        <em>No hype. Just the forecast.</em>
-      </p>
-    </div>
-
-  </aside>
-</div>
-
-<!-- ── Footer ── -->
-<footer class="site-footer">
-  © 2026 Abuja Weather<br>
-  Data: <a href="https://open-meteo.com">Open-Meteo</a> (ECMWF IFS) · For life-safety decisions, consult <a href="https://nimet.gov.ng">NiMet</a>
-</footer>
-
 <script>
-/* ─────────────────────────────────────────
-   CONFIG — change SITE_NAME once you have a brand
-   ──────────────────────────────────────── */
-const SITE_NAME = "Abuja Weather";
-const LAT = 9.0765, LON = 7.3986;
-
 /* ── Helpers ── */
 const weatherDesc = {
   0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',
@@ -768,477 +283,172 @@ const weatherDesc = {
 };
 
 const weatherIcon = {
-  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
-  51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
-  71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',
-  95:'⛈️',96:'⛈️',99:'⛈️'
+  0:'wb_sunny', 1:'partly_cloudy_day', 2:'partly_cloudy_day', 3:'cloud',
+  45:'foggy', 48:'foggy', 51:'grain', 53:'grain', 55:'rainy',
+  61:'rainy', 63:'rainy', 65:'rainy', 80:'rainy', 81:'rainy', 82:'thunderstorm',
+  95:'thunderstorm', 96:'thunderstorm', 99:'thunderstorm'
+};
+
+const weatherIconColor = {
+  0:'text-yellow-400', 1:'text-yellow-400', 2:'text-yellow-400', 3:'text-slate-400',
+  45:'text-slate-300', 48:'text-slate-300', 51:'text-blue-300', 53:'text-blue-300',
+  55:'text-blue-400', 61:'text-blue-400', 63:'text-blue-400', 65:'text-blue-500',
+  80:'text-blue-400', 81:'text-blue-500', 82:'text-indigo-400',
+  95:'text-indigo-400', 96:'text-indigo-400', 99:'text-indigo-500'
 };
 
 function windDir(deg) {
   return ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45)%8];
 }
 
+function uvLabel(uv) {
+  if (uv <= 2) return 'Low';
+  if (uv <= 5) return 'Moderate';
+  if (uv <= 7) return 'High';
+  if (uv <= 10) return 'Very High';
+  return 'Extreme';
+}
+
 function dayLabel(isoStr, i) {
   if (i === 0) return 'Today';
   if (i === 1) return 'Tomorrow';
-  return new Date(isoStr).toLocaleDateString('en-NG', { weekday: 'long' });
+  return new Date(isoStr + 'T12:00:00').toLocaleDateString('en-NG', { weekday: 'short' });
 }
 
-function fmtDate(d) {
-  return d.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-}
-
-function stepDone(n) {
-  const el = document.getElementById(`step-${n}`);
-  if (el) { el.classList.remove('active'); el.classList.add('done'); }
-}
-
-function stepActive(n) {
-  stepDone(n - 1);
-  const el = document.getElementById(`step-${n}`);
-  if (el) el.classList.add('active');
-}
-
-/* ── Fetch weather from backend API with 30-minute cache ── */
+/* ── Fetch from server cache ── */
 async function fetchWeather() {
-  stepActive(1);
-  const data = await fetch('https://weather-project-237m.onrender.com/api/weather')
-    .then(r => r.json());
-  stepActive(2);
-  stepActive(3);
-  return data;
+  const res = await fetch('https://weather-project-237m.onrender.com/api/weather');
+  if (!res.ok) throw new Error('Weather fetch failed');
+  return res.json();
 }
 
-/* ── Populate sidebar conditions ── */
-function populateConditions(data) {
-  const c = data.forecast.current;
-  document.getElementById('sw-temp').textContent     = `${Math.round(c.temperature_2m)}°C`;
-  document.getElementById('sw-desc').textContent     = (weatherIcon[c.weather_code]||'') + ' ' + (weatherDesc[c.weather_code]||'');
-  document.getElementById('sw-feels').textContent    = `${Math.round(c.apparent_temperature)}°C`;
-  document.getElementById('sw-humidity').textContent = `${c.relative_humidity_2m}%`;
-  document.getElementById('sw-wind').textContent     = `${Math.round(c.wind_speed_10m)} km/h ${windDir(c.wind_direction_10m)}`;
-  document.getElementById('sw-uv').textContent       = Math.round(c.uv_index || 0);
+/* ── Populate UI ── */
+function populateHero(current, daily) {
+  const code = current.weather_code;
+  document.getElementById('hero-temp').textContent = `${Math.round(current.temperature_2m)}°`;
+  document.getElementById('hero-condition').textContent = weatherDesc[code] || 'Variable';
+  document.getElementById('hero-feels').textContent = `Feels like ${Math.round(current.apparent_temperature)}°`;
+  document.getElementById('hero-hilo').textContent = `H: ${Math.round(daily.temperature_2m_max[0])}°  L: ${Math.round(daily.temperature_2m_min[0])}°`;
+
+  document.title = `${Math.round(current.temperature_2m)}° · ${weatherDesc[code] || 'Abuja'} — Abuja Weather`;
+
+  const el = document.getElementById('last-updated');
+  el.textContent = `Updated ${new Date().toLocaleTimeString('en-NG', {hour:'2-digit',minute:'2-digit',hour12:true})}`;
+  el.classList.remove('hidden');
 }
 
-/* ── Build weather context for AI ── */
-function buildContext(data) {
-  const c  = data.forecast.current;
-  const d  = data.forecast.daily;
-  const h  = data.historical.daily;
+function populateAlert(daily) {
+  const rainChance = daily.precipitation_probability_max[0] || 0;
+  const code = daily.weather_code[0];
+  const card = document.getElementById('alert-card');
+
+  if (code === 95 || code === 96 || code === 99) {
+    document.getElementById('alert-title').textContent = 'Thunderstorm Warning';
+    document.getElementById('alert-msg').textContent = `Thunderstorms are likely today with ${rainChance}% rain probability. Seek shelter if outdoors.`;
+    card.classList.remove('hidden');
+  } else if (rainChance >= 70) {
+    document.getElementById('alert-title').textContent = 'Heavy Rain Expected';
+    document.getElementById('alert-msg').textContent = `${rainChance}% chance of rain today. Low-lying areas may experience flooding.`;
+    card.classList.remove('hidden');
+  } else if (daily.temperature_2m_max[0] >= 38) {
+    document.getElementById('alert-title').textContent = 'Extreme Heat Warning';
+    document.getElementById('alert-msg').textContent = `High of ${Math.round(daily.temperature_2m_max[0])}°C expected. Stay hydrated and limit outdoor exposure.`;
+    card.classList.remove('hidden');
+  }
+}
+
+function populateHourly(current, daily) {
   const now = new Date();
-  const mo  = now.getMonth() + 1;
+  const currentHour = now.getHours();
+  const container = document.getElementById('hourly-container');
+  container.innerHTML = '';
 
-  let season = '';
-  if (mo >= 11 || mo <= 2) season = 'harmattan season — dry, dusty northeast trade winds dominate, visibility often reduced, nights unusually cool';
-  else if (mo >= 3 && mo <= 5) season = 'the pre-rains transition — heat builds, humidity rises, first showers possible';
-  else if (mo >= 6 && mo <= 9) season = 'the rainy season — afternoon and evening downpours are common, flooding risk in low-lying areas';
-  else season = 'the October–November transition back toward harmattan — rains tapering off, air beginning to dry';
+  for (let i = 0; i < 6; i++) {
+    const hour = (currentHour + i) % 24;
+    const isNow = i === 0;
 
-  const pastRainTotal  = (h.precipitation_sum || []).reduce((a, b) => a + b, 0).toFixed(1);
-  const pastMaxAvg     = ((h.temperature_2m_max || []).reduce((a, b) => a + b, 0) / (h.temperature_2m_max||[1]).length).toFixed(1);
-  const hadRain        = parseFloat(pastRainTotal) > 3;
+    const high = daily.temperature_2m_max[0];
+    const low = daily.temperature_2m_min[0];
+    const peakHour = 14;
+    const distFromPeak = Math.abs(hour - peakHour);
+    const temp = Math.round(low + (high - low) * Math.max(0, 1 - distFromPeak / 10));
 
-  const weekMaxPrecip  = Math.max(...(d.precipitation_probability_max || [0]));
-  const rainyDays      = (d.precipitation_probability_max || []).filter(p => p >= 40).length;
-  const weekHighAvg    = (d.temperature_2m_max.reduce((a,b)=>a+b,0) / d.temperature_2m_max.length).toFixed(1);
+    const code = hour >= 6 && hour <= 19 ? daily.weather_code[0] : 0;
+    const icon = hour < 6 || hour >= 20 ? 'nights_stay' : (weatherIcon[code] || 'partly_cloudy_day');
+    const iconColor = hour < 6 || hour >= 20 ? 'text-blue-200' : (weatherIconColor[code] || 'text-yellow-400');
 
-  // Build day-by-day data string for AI
-  const dayLines = d.time.map((date, i) => {
+    const timeStr = isNow ? 'Now' : `${String(hour).padStart(2,'0')}:00`;
+
+    container.innerHTML += `
+      <div class="glass-card min-w-[100px] p-4 rounded-2xl flex flex-col items-center gap-3 ${isNow ? 'bg-primary/20 border-primary/30' : ''}">
+        <span class="font-body text-xs ${isNow ? 'text-primary font-bold uppercase tracking-wider' : 'text-on-surface-variant font-medium'}">${timeStr}</span>
+        <span class="material-symbols-outlined text-3xl ${iconColor}" style="font-variation-settings:'FILL' 1;">${icon}</span>
+        <span class="font-headline font-bold text-lg ${isNow ? 'text-primary' : ''}">${temp}°</span>
+      </div>`;
+  }
+}
+
+function populateConditions(current) {
+  const uv = Math.round(current.uv_index || 0);
+  document.getElementById('cond-humidity').textContent = `${current.relative_humidity_2m}%`;
+  document.getElementById('cond-humidity-sub').textContent = current.relative_humidity_2m > 70 ? 'High humidity — feels muggy.' : 'Comfortable humidity level.';
+  document.getElementById('cond-wind').innerHTML = `${Math.round(current.wind_speed_10m)}<span class="text-sm font-normal ml-1">km/h</span>`;
+  document.getElementById('cond-wind-sub').textContent = `Breeze from the ${windDir(current.wind_direction_10m)}.`;
+  document.getElementById('cond-uv').textContent = uvLabel(uv);
+  document.getElementById('cond-uv-bar').style.width = `${Math.min(100, uv / 11 * 100)}%`;
+  document.getElementById('cond-pressure').innerHTML = `${Math.round(current.surface_pressure)}<span class="text-sm font-normal ml-1">hPa</span>`;
+}
+
+function populateWeekly(daily) {
+  const container = document.getElementById('weekly-container');
+  container.innerHTML = '';
+
+  const allHighs = daily.temperature_2m_max;
+  const allLows = daily.temperature_2m_min;
+  const tempRange = Math.max(...allHighs) - Math.min(...allLows);
+
+  daily.time.forEach((date, i) => {
+    const high = Math.round(allHighs[i]);
+    const low = Math.round(allLows[i]);
+    const code = daily.weather_code[i];
+    const icon = weatherIcon[code] || 'partly_cloudy_day';
+    const iconColor = weatherIconColor[code] || 'text-yellow-400';
     const label = dayLabel(date, i);
-    const high  = Math.round(d.temperature_2m_max[i]);
-    const low   = Math.round(d.temperature_2m_min[i]);
-    const rain  = d.precipitation_probability_max[i] || 0;
-    const desc  = weatherDesc[d.weather_code[i]] || 'variable';
-    return `  ${label}: High ${high}°C / Low ${low}°C, ${desc}, ${rain}% rain chance`;
-  }).join('\n');
+    const rain = daily.precipitation_probability_max[i] || 0;
 
-  return {
-    dateStr: fmtDate(now),
-    season,
-    currentTemp:  Math.round(c.temperature_2m),
-    feelsLike:    Math.round(c.apparent_temperature),
-    humidity:     c.relative_humidity_2m,
-    windSpeed:    Math.round(c.wind_speed_10m),
-    windDirStr:   windDir(c.wind_direction_10m),
-    uvIndex:      Math.round(c.uv_index || 0),
-    pressure:     Math.round(c.surface_pressure),
-    condDesc:     weatherDesc[c.weather_code] || 'variable',
-    todayHigh:    Math.round(d.temperature_2m_max[0]),
-    todayLow:     Math.round(d.temperature_2m_min[0]),
-    todayRain:    d.precipitation_probability_max[0] || 0,
-    pastRainTotal, pastMaxAvg, hadRain,
-    weekMaxPrecip, rainyDays, weekHighAvg,
-    dayLines,
-    dailyData: d
-  };
-}
+    const barWidth = tempRange > 0 ? Math.round(((high - Math.min(...allLows)) / tempRange) * 100) : 50;
+    const barColor = rain >= 50 ? 'bg-secondary' : 'bg-primary';
 
-/* ── Call Render API ── */
-async function generateForecast(ctx) {
-  stepActive(4);
-
-  const prompt = `You are the voice of "${SITE_NAME}", a trusted local weather blog covering Abuja, Nigeria — the Federal Capital Territory. You write daily forecast posts in the style of Space City Weather (Houston): conversational, honest, hype-free, expert but never condescending. You write like a real meteorologist who lives in Abuja.
-
-Today is ${ctx.dateStr}. Abuja is currently in ${ctx.season}.
-
-CURRENT CONDITIONS RIGHT NOW:
-- Temperature: ${ctx.currentTemp}°C (feels like ${ctx.feelsLike}°C)
-- Conditions: ${ctx.condDesc}
-- Humidity: ${ctx.humidity}%
-- Wind: ${ctx.windSpeed} km/h from the ${ctx.windDirStr}
-- UV Index: ${ctx.uvIndex}
-- Pressure: ${ctx.pressure} hPa
-
-7-DAY FORECAST (use these to write day-by-day sections):
-${ctx.dayLines}
-
-PAST 7 DAYS:
-- Average high: ${ctx.pastMaxAvg}°C
-- Total rainfall: ${ctx.pastRainTotal}mm
-- Notable rain: ${ctx.hadRain ? 'yes — worth mentioning' : 'no significant rain'}
-
-WEEK SUMMARY:
-- Days with ≥40% rain chance: ${ctx.rainyDays}
-- Peak rain probability: ${ctx.weekMaxPrecip}%
-- Average high this week: ${ctx.weekHighAvg}°C
-
-WRITING INSTRUCTIONS:
-1. Start with exactly one "In brief:" sentence summarising what the post covers. This will be formatted separately — just write it as the first line starting with "In brief:".
-
-2. After the In brief line, write the full article. Organically decide what to cover — do NOT use a fixed template every time. Options: lead with today if it's dramatic; lead with the week if there's a notable pattern; include a brief look back at the past week if something happened. Vary your approach each time.
-
-3. Use day-of-week headers (e.g. "Wednesday", "Thursday through the weekend") as natural section breaks within the prose — exactly like Space City Weather does. These become <h3> headers. Mark them by putting the header text on its own line preceded by "###".
-
-4. Where weather maps or satellite images would appear in a real post, insert a placeholder on its own line in this exact format: [MAP: brief description of what map would show here]. These will be rendered as image placeholders. Use 1–3 maps per post, placed naturally within the relevant sections.
-
-5. Write 8–12 paragraphs total. This should be a substantial, long-form article — minimum 600 words, ideally 800–1000 words. No bullet points. Pure prose. Vary sentence length. Sound human — like a knowledgeable friend. Do not summarise or cut short — readers expect a full, detailed forecast.
-
-6. Reference Abuja landmarks and context naturally: Maitama, Garki, Wuse, Gwarinpa, the Aso Rock hills, NASS, the airport road, harmattan dust haze, flooding in low-lying areas, etc. Use these where they genuinely fit — not forced.
-
-7. Be honest about uncertainty. Say "my best guess is…", "there's a chance…", "if things go as I expect…" when appropriate.
-
-8. End with one practical takeaway sentence for residents.
-
-9. Never use em-dashes. Never say "it's worth noting" or "it's important to remember". No AI clichés.
-
-Output only the article text. No title, no byline, no extra commentary.`;
-
-  const response = await fetch("https://weather-project-237m.onrender.com/api/forecast", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: prompt })
+    container.innerHTML += `
+      <div class="flex items-center justify-between">
+        <span class="font-body font-medium text-on-surface w-20">${label}</span>
+        <span class="material-symbols-outlined ${iconColor}" style="font-variation-settings:'FILL' 1;">${icon}</span>
+        <div class="flex items-center gap-4 w-36 justify-end">
+          <span class="font-headline text-on-surface-variant text-sm">${low}°</span>
+          <div class="flex-1 h-1.5 bg-white/10 rounded-full relative">
+            <div class="absolute left-0 top-0 h-full ${barColor} rounded-full transition-all duration-500" style="width:${barWidth}%"></div>
+          </div>
+          <span class="font-headline font-bold text-sm">${high}°</span>
+        </div>
+      </div>`;
   });
-
-  const data = await response.json();
-  return data.text;
 }
 
-/* ── Parse and render article ── */
-function renderArticle(raw, ctx) {
-  const lines = raw.split('\n');
-  let briefLine = '';
-  let bodyLines = [];
-
-  // Extract "In brief:" line
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim().toLowerCase().startsWith('in brief:')) {
-      briefLine = lines[i].trim();
-      bodyLines = lines.slice(i + 1);
-      break;
-    }
-  }
-  if (!briefLine) bodyLines = lines;
-
-  // Build HTML from body lines
-  let bodyHTML = '';
-  let currentPara = '';
-
-  function flushPara() {
-    if (currentPara.trim()) {
-      bodyHTML += `<p>${currentPara.trim()}</p>\n`;
-      currentPara = '';
-    }
-  }
-
-  for (const line of bodyLines) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      flushPara();
-      continue;
-    }
-    // Day header
-    if (trimmed.startsWith('###')) {
-      flushPara();
-      const heading = trimmed.replace(/^###\s*/, '');
-      bodyHTML += `<h3>${heading}</h3>\n`;
-      continue;
-    }
-    // Map placeholder
-    if (trimmed.includes('[MAP:')) {
-      const parts = trimmed.split(/(\[MAP:[^\]]+\])/);
-      for (const part of parts) {
-        if (part.startsWith('[MAP:')) {
-          flushPara();
-          const desc = part.replace(/^\[MAP:\s*/i, '').replace(/\]$/, '').trim();
-          bodyHTML += `
-            <div class="wp-block-image">
-              <figure>
-                <div style="background:#f0f0ee;border:1px solid #ddd;padding:48px 24px;text-align:center;">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" style="margin-bottom:10px;display:block;margin-left:auto;margin-right:auto">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
-                  </svg>
-                  <div style="font-family:var(--sans);font-size:0.82rem;color:#888;font-style:italic">${desc}</div>
-                </div>
-                <figcaption class="img-caption">${desc}</figcaption>
-              </figure>
-            </div>`;
-        } else if (part.trim()) {
-          currentPara += (currentPara ? ' ' : '') + part.trim();
-        }
-      }
-    } else {
-      currentPara += (currentPara ? ' ' : '') + trimmed;
-    }
-  }
-  flushPara();
-
-  const now     = new Date();
-  const timeStr = now.toLocaleTimeString('en-NG', { hour:'2-digit', minute:'2-digit', hour12: true });
-  const dateStr = now.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-
-  document.getElementById('article-container').innerHTML = `
-    <header class="entry-header">
-      <h1 class="entry-title" id="post-title">Loading headline…</h1>
-      <div class="entry-meta">
-        <span class="posted-on">
-          ${dateStr} <span style="color:#aaa">at</span> ${timeStr} WAT
-        </span>
-        <span class="byline"> by <a href="#">Abuja Weather Desk</a></span>
-      </div>
-    </header>
-
-    ${briefLine ? `
-    <div class="in-brief">
-      <strong>In brief</strong>: ${briefLine.replace(/^in brief:\s*/i, '')}
-    </div>` : ''}
-
-    <div class="entry-content">
-      ${bodyHTML}
-    </div>
-
-    <div class="scw-share-row">
-      <a class="share-btn" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(document.title)}" target="_blank">Share on X</a>
-      <a class="share-btn" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(location.href)}" target="_blank">Facebook</a>
-      <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent(document.title + ' ' + location.href)}" target="_blank">WhatsApp</a>
-    </div>
-
-    <div class="regen-wrap">
-      <button class="btn-regen" id="regen-btn" onclick="handleRegen()">↻ Regenerate Forecast</button>
-      <p class="regen-note">Each generation pulls live weather data — articles vary each time.</p>
-    </div>
-
-    <div class="comments-area">
-      <h2 class="comments-title">Notable Comments</h2>
-      <ol class="comment-list" id="comments-list">
-        <li><div class="comment-body" style="padding:20px 0;font-family:var(--sans);font-size:0.9rem;color:var(--muted);font-style:italic">
-          Comments will appear here via the community forum once the site launches.
-        </div></li>
-      </ol>
-      <div class="discourse-link">
-        <a href="#">Continue the discussion in the Abuja Weather community forum →</a>
-      </div>
-    </div>
-  `;
-
-  generateHeadline(ctx);
-}
-
-function generateHeadline(ctx) {
-  let h = '';
-  if (ctx.todayRain >= 60)       h = `Heavy rain likely across the FCT today — what to expect`;
-  else if (ctx.todayRain >= 35)  h = `Rain possible this ${new Date().getHours() < 14 ? 'afternoon' : 'evening'} for Abuja`;
-  else if (ctx.rainyDays >= 4)   h = `A wet stretch ahead for the FCT — here's the breakdown`;
-  else if (ctx.currentTemp >= 38) h = `Another scorcher in Abuja, with temperatures pushing ${ctx.todayHigh}°C`;
-  else if (ctx.season.includes('harmattan')) h = `Harmattan conditions continue over the FCT — dust and dry air persist`;
-  else if (ctx.hadRain)          h = `After recent rainfall, conditions settle across Abuja`;
-  else h = `A ${ctx.todayHigh >= 35 ? 'hot' : 'warm'}, ${ctx.todayRain < 20 ? 'dry' : 'partly unsettled'} day for the Federal Capital`;
-
-  const el = document.getElementById('post-title');
-  if (el) el.textContent = h;
-  document.title = `${h} – ${SITE_NAME}`;
-}
-
-/* ── Archive Navigation ── */
-let articleDates = [];
-let currentDateIndex = 0;
-let weatherCtx = null;
-
-async function loadArticleDates() {
-  try {
-    const res = await fetch('https://api.github.com/repos/faysal-MMII/abuja-weather-articles/contents/articles', {
-      headers: { 'Accept': 'application/vnd.github+json' }
-    });
-    const files = await res.json();
-    articleDates = files
-      .filter(f => f.name.endsWith('.json'))
-      .map(f => f.name.replace('.json', ''))
-      .sort()
-      .reverse();
-
-    // Populate Recent Posts sidebar
-    const recentList = document.getElementById('recent-posts');
-    if (recentList && articleDates.length) {
-      recentList.innerHTML = articleDates.slice(0, 5).map((date, i) => `
-        <li class="${i === 0 ? 'current' : ''}">
-          <a href="#" onclick="jumpToArticle('${date}'); return false;">
-            ${new Date(date).toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}
-          </a>
-        </li>
-      `).join('');
-    }
-
-    updateNavButtons();
-  } catch(e) {
-    console.error('Failed to load article dates:', e);
-  }
-}
-
-function updateNavButtons() {
-  const nav = document.getElementById('article-nav');
-  const pagination = document.getElementById('pagination');
-  if (!nav || !pagination) return;
-
-  const total = articleDates.length;
-  if (total <= 1) { nav.style.display = 'none'; return; }
-  nav.style.display = 'block';
-
-  const current = currentDateIndex; // 0 = newest
-  let pages = new Set([0, total - 1, current]);
-  if (current > 0) pages.add(current - 1);
-  if (current < total - 1) pages.add(current + 1);
-  const sorted = [...pages].sort((a, b) => b - a); // newest first
-
-  let html = '';
-  let prev = null;
-  for (const i of sorted) {
-    if (prev !== null && prev - i > 1) html += `<span style="color:var(--muted)">…</span>`;
-    const isActive = i === current;
-    html += `<a href="#" onclick="jumpToIndex(${i}); return false;" style="
-      padding:4px 10px;
-      border:1px solid ${isActive ? 'var(--text)' : 'var(--border)'};
-      font-weight:${isActive ? '700' : '400'};
-      color:${isActive ? 'var(--text)' : 'var(--muted)'};
-      text-decoration:none;
-      font-size:0.85rem;
-    ">${total - i}</a>`;
-    prev = i;
-  }
-
-  if (current < total - 1) {
-    html += `<a href="#" onclick="jumpToIndex(${current + 1}); return false;" style="color:var(--muted);text-decoration:none;font-size:0.85rem;padding:4px 8px;">Next →</a>`;
-  }
-
-  pagination.innerHTML = html;
-}
-
-async function loadArticleByDate(date) {
-  const url = `https://raw.githubusercontent.com/faysal-MMII/abuja-weather-articles/main/articles/${date}.json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Article not found');
-  const json = await res.json();
-  return json.article;
-}
-
-async function navigateArticle(direction) {
-  currentDateIndex += direction * -1;
-  if (currentDateIndex < 0) currentDateIndex = 0;
-  if (currentDateIndex >= articleDates.length) currentDateIndex = articleDates.length - 1;
-  const date = articleDates[currentDateIndex];
-  document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
-  const raw = await loadArticleByDate(date);
-  renderArticle(raw, weatherCtx);
-  updateNavButtons();
-  window.scrollTo(0, 0);
-}
-
-async function jumpToArticle(date) {
-  currentDateIndex = articleDates.indexOf(date);
-  document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
-  const raw = await loadArticleByDate(date);
-  renderArticle(raw, weatherCtx);
-  updateNavButtons();
-  window.scrollTo(0, 0);
-}
-
-async function jumpToIndex(index) {
-  currentDateIndex = index;
-  const date = articleDates[index];
-  document.getElementById('article-container').innerHTML = `<div class="loading-state"><div class="spinner"></div><div style="font-family:var(--sans);color:var(--muted)">Loading article…</div></div>`;
-  const raw = await loadArticleByDate(date);
-  renderArticle(raw, weatherCtx);
-  updateNavButtons();
-  window.scrollTo(0, 0);
-}
-
-/* ── Regen handler ── */
-async function handleRegen() {
-  const btn = document.getElementById('regen-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Writing…'; }
-
-  document.getElementById('article-container').innerHTML = `
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <div style="font-family:var(--sans);font-size:0.9rem;color:var(--muted)">Writing a new forecast…</div>
-    </div>`;
-
-  try {
-    const raw = await generateForecast(weatherCtx);
-    renderArticle(raw, weatherCtx);
-  } catch(e) {
-    document.getElementById('article-container').innerHTML =
-      `<p style="font-family:var(--sans);color:#c0392b;padding:20px 0">Failed to regenerate. Please try again.</p>`;
-  }
-  if(btn) { btn.disabled = false; btn.textContent = '↻ Regenerate Forecast'; }
-}
-
-/* ── Boot Sequence with GitHub Cache First ── */
+/* ── Boot ── */
 (async () => {
   try {
     const data = await fetchWeather();
-    populateConditions(data);
-    weatherCtx = buildContext(data);
-    
-    await loadArticleDates();
+    const { current, daily } = data.forecast;
 
-    // Try GitHub first
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
-    const githubUrl = `https://raw.githubusercontent.com/faysal-MMII/abuja-weather-articles/main/articles/${today}.json`;
-
-    let raw;
-    try {
-      const cached = await fetch(githubUrl);
-      if (cached.ok) {
-        const json = await cached.json();
-        raw = json.article;
-        console.log('Loaded article from GitHub cache');
-      }
-    } catch (_) {}
-
-    // Fall back to Groq if no cached article
-    if (!raw) {
-      console.log('No cached article found, generating fresh...');
-      raw = await generateForecast(weatherCtx);
-    }
-
-    document.getElementById('loading').style.display = 'none';
-    renderArticle(raw, weatherCtx);
+    populateHero(current, daily);
+    populateAlert(daily);
+    populateHourly(current, daily);
+    populateConditions(current);
+    populateWeekly(daily);
   } catch(err) {
-    document.getElementById('loading').innerHTML = `
-      <div style="font-family:var(--sans);color:#c0392b;padding:20px 0">
-        ⚠️ Failed to load forecast: ${err.message}<br>
-        <span style="color:var(--muted);font-size:0.85rem">Check your connection and reload.</span>
-      </div>`;
-    console.error(err);
+    console.error('Failed to load weather:', err);
+    document.getElementById('hero-temp').textContent = '--°';
+    document.getElementById('hero-condition').textContent = 'Unable to load';
   }
 })();
 </script>

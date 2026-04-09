@@ -9,7 +9,27 @@ app.use(express.json());
 // Weather cache
 let weatherCache = null;
 let weatherCacheTime = 0;
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const CACHE_DURATION = 30 * 60 * 1000; 
+
+// Traffic cache
+let trafficCache = null;
+let trafficCacheTime = 0;
+const TRAFFIC_CACHE_DURATION = 15 * 60 * 1000;
+
+// Key Abuja road corridors with TomTom coordinates
+// Using only coordinates confirmed to work with TomTom's flow data API
+// TomTom coverage in Abuja is limited to major expressways and arterial roads
+const ABUJA_CORRIDORS = [
+  { name: 'Nnamdi Azikiwe Expressway', point: '9.0579,7.4891' },      // ✅ Confirmed working
+  { name: 'Airport Road', point: '9.0079,7.4310' },                    // Airport/Lugbe area
+  { name: 'Kubwa Expressway', point: '9.1200,7.3500' },                // Kubwa axis
+  { name: 'Abuja-Keffi Road', point: '9.0900,7.5200' },                // Keffi/Mararaba
+  { name: 'Herbert Macaulay Way', point: '9.0747,7.4760' },            // Wuse Central
+];
+
+// Fallback single-corridor mode for when API limits or errors occur
+// This ensures alerts.html still shows some traffic data even if multi-fetch fails
+let lastWorkingSegment = null;
 
 async function saveArticleToGitHub(article, dateStr) {
   const filename = `articles/${dateStr}.json`;
@@ -19,7 +39,6 @@ async function saveArticleToGitHub(article, dateStr) {
     generatedAt: new Date().toISOString()
   })).toString('base64');
 
-  // Check if file already exists (needed for SHA if updating)
   let sha;
   try {
     const check = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPO}/contents/${filename}`, {
@@ -61,7 +80,6 @@ async function saveArticleToGitHub(article, dateStr) {
 async function generateAndSave() {
   console.log('Running daily forecast generation...');
   try {
-    // Step 1: Fetch weather data
     const weatherRes = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=9.0765&longitude=7.3986` +
       `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,` +
@@ -71,10 +89,8 @@ async function generateAndSave() {
     );
     const weatherData = await weatherRes.json();
     
-    // DEBUG: Log the raw Open-Meteo response to see what's coming back
     console.log('Open-Meteo response:', JSON.stringify(weatherData));
     
-    // Check if current data exists — if not, throw error with details
     if (!weatherData.current) {
       throw new Error('Open-Meteo returned no current data. Response: ' + JSON.stringify(weatherData));
     }
@@ -83,7 +99,21 @@ async function generateAndSave() {
     const d = weatherData.daily;
     console.log('Weather data fetched successfully');
 
-    // Step 2: Build prompt
+    let trafficSummary = '';
+    try {
+      // Use the confirmed working coordinate for traffic summary
+      const trafficRes = await fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=9.0579,7.4891&key=${process.env.TOMTOM_API_KEY}`);
+      if (trafficRes.ok) {
+        const trafficData = await trafficRes.json();
+        const fd = trafficData.flowSegmentData;
+        const congestion = fd.freeFlowSpeed > 0 ? Math.max(0, 1 - (fd.currentSpeed / fd.freeFlowSpeed)) : 0;
+        const level = congestion >= 0.7 ? 'heavy' : congestion >= 0.4 ? 'moderate' : 'light';
+        trafficSummary = `Nnamdi Azikiwe Expressway traffic is currently ${level} (${Math.round(fd.currentSpeed)} km/h vs free-flow ${Math.round(fd.freeFlowSpeed)} km/h).`;
+      }
+    } catch (_) {
+      trafficSummary = '';
+    }
+
     const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write a daily forecast post in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
 
 CURRENT CONDITIONS:
@@ -91,13 +121,13 @@ CURRENT CONDITIONS:
 - Humidity: ${c.relative_humidity_2m}%
 - Wind: ${Math.round(c.wind_speed_10m)} km/h
 - UV Index: ${Math.round(c.uv_index || 0)}
+${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 
 7-DAY FORECAST:
 ${d.time.map((date, i) => `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`).join('\n')}
 
-Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers. Use [MAP: description] for image placeholders. No bullet points. Reference Abuja landmarks naturally.`;
+Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers. Use [MAP: description] for image placeholders. No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
-    // Step 3: Call Groq
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -115,7 +145,6 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ##
     const article = groqData.choices[0].message.content.trim();
     console.log('Article generated successfully');
 
-    // Step 4: Save to GitHub
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
     console.log('Attempting GitHub save for date:', dateStr);
     console.log('GITHUB_REPO:', process.env.GITHUB_REPO);
@@ -127,6 +156,93 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ##
     console.error('Generation failed:', err.message);
   }
 }
+
+// Traffic endpoint with fallback and resilience
+app.get('/api/traffic', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (trafficCache && (now - trafficCacheTime) < TRAFFIC_CACHE_DURATION) {
+      return res.json(trafficCache);
+    }
+
+    const apiKey = process.env.TOMTOM_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'TomTom API key not configured' });
+    }
+
+    // Fetch flow data for each corridor in parallel
+    const results = await Promise.all(
+      ABUJA_CORRIDORS.map(async (corridor) => {
+        try {
+          const url = `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=${corridor.point}&key=${apiKey}`;
+          const r = await fetch(url);
+          if (!r.ok) {
+            console.warn(`TomTom error ${r.status} for ${corridor.name}`);
+            return null;
+          }
+          const data = await r.json();
+          
+          // Check if we got valid flow data
+          if (!data.flowSegmentData) {
+            console.warn(`No flowSegmentData for ${corridor.name}`);
+            return null;
+          }
+          
+          const fd = data.flowSegmentData;
+          const currentSpeed = fd.currentSpeed;
+          const freeFlowSpeed = fd.freeFlowSpeed;
+          
+          if (!currentSpeed || !freeFlowSpeed) {
+            console.warn(`Missing speed data for ${corridor.name}`);
+            return null;
+          }
+          
+          const congestion = freeFlowSpeed > 0 ? Math.max(0, 1 - (currentSpeed / freeFlowSpeed)) : 0;
+
+          // Store the first working segment as fallback
+          if (!lastWorkingSegment && currentSpeed) {
+            lastWorkingSegment = {
+              name: corridor.name,
+              currentSpeed,
+              freeFlowSpeed,
+              congestion: Math.round(congestion * 100) / 100
+            };
+          }
+
+          return {
+            name: corridor.name,
+            currentSpeed,
+            freeFlowSpeed,
+            congestion: Math.round(congestion * 100) / 100
+          };
+        } catch (err) {
+          console.warn(`Traffic fetch failed for ${corridor.name}:`, err.message);
+          return null;
+        }
+      })
+    );
+
+    let filtered = results.filter(Boolean);
+    
+    // If no segments returned but we have a working fallback, use it
+    if (filtered.length === 0 && lastWorkingSegment) {
+      console.log('Using last working segment as fallback');
+      filtered = [lastWorkingSegment];
+    }
+    
+    trafficCache = filtered;
+    trafficCacheTime = now;
+
+    res.json(filtered);
+  } catch (err) {
+    console.error('Traffic endpoint error:', err.message);
+    // Return last working segment if available instead of failing completely
+    if (lastWorkingSegment) {
+      return res.json([lastWorkingSegment]);
+    }
+    res.status(500).json({ error: 'Traffic fetch failed', detail: err.message });
+  }
+});
 
 // Manual trigger endpoint — for testing and cron-job.org
 app.get('/api/generate', async (req, res) => {
@@ -159,7 +275,7 @@ app.post('/api/forecast', async (req, res) => {
   }
 });
 
-// New /api/weather endpoint with 30-minute cache
+// /api/weather endpoint with 30-minute cache
 app.get('/api/weather', async (req, res) => {
   try {
     const now = Date.now();

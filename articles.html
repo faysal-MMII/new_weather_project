@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Weather Journals — Abuja Weather</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary-fixed": "#9cf0ff",
+        "on-secondary-fixed": "#000767",
+        "on-primary-fixed": "#001f24",
+        "primary": "#c3f5ff",
+        "on-error-container": "#ffdad6",
+        "on-surface-variant": "#bac9cc",
+        "tertiary-fixed-dim": "#ffb866",
+        "secondary-fixed": "#e0e0ff",
+        "error-container": "#93000a",
+        "tertiary-fixed": "#ffddba",
+        "surface-dim": "#0f1418",
+        "surface-container-low": "#171c20",
+        "primary-container": "#00e5ff",
+        "on-tertiary-container": "#804e00",
+        "on-secondary-container": "#a8afff",
+        "tertiary-container": "#ffc687",
+        "surface-container-high": "#262b2f",
+        "on-primary-container": "#00626e",
+        "primary-fixed-dim": "#00daf3",
+        "on-secondary": "#1b247f",
+        "on-primary-fixed-variant": "#004f58",
+        "surface-bright": "#353a3e",
+        "secondary-container": "#343d96",
+        "on-error": "#690005",
+        "secondary": "#bdc2ff",
+        "on-tertiary-fixed": "#2b1700",
+        "outline": "#849396",
+        "surface-container": "#1b2024",
+        "tertiary": "#ffe9d5",
+        "inverse-primary": "#006875",
+        "error": "#ffb4ab",
+        "on-surface": "#dfe3e9",
+        "on-background": "#dfe3e9",
+        "surface-container-lowest": "#0a0f13",
+        "surface": "#0f1418",
+        "inverse-surface": "#dfe3e9",
+        "inverse-on-surface": "#2c3135",
+        "on-primary": "#00363d",
+        "background": "#0f1418",
+        "secondary-fixed-dim": "#bdc2ff",
+        "surface-variant": "#30353a",
+        "surface-container-highest": "#30353a",
+        "outline-variant": "#3b494c",
+        "on-tertiary": "#482900",
+        "on-tertiary-fixed-variant": "#673d00",
+        "on-secondary-fixed-variant": "#343d96"
+      },
+      fontFamily: {
+        "headline": ["Space Grotesk"],
+        "body": ["Inter"],
+        "label": ["Inter"]
+      },
+      borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+    }
+  }
+}
+</script>
+<style>
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.glass-card {
+  background: rgba(10, 15, 20, 0.85);
+  backdrop-filter: blur(40px);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.03);
+}
+.mesh-gradient {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(195,245,255,0.06) 0%, transparent 60%),
+    radial-gradient(circle at 80% 10%, rgba(255,233,213,0.05) 0%, transparent 50%);
+}
+.text-shadow-strong { text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+
+.article-body h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c3f5ff;
+  border-left: 4px solid #c3f5ff;
+  padding-left: 0.75rem;
+  margin: 1.5rem 0 0.75rem;
+}
+.article-body p {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: #dfe3e9;
+  margin-bottom: 1rem;
+}
+.article-body .map-placeholder {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 1rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  margin: 1.5rem 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #849396;
+  font-style: italic;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  display: inline-block;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.page-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #bac9cc;
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.page-btn:hover { border-color: #c3f5ff; color: #c3f5ff; }
+.page-btn.active { background: rgba(195,245,255,0.15); border-color: #c3f5ff; color: #c3f5ff; font-weight: 700; }
+.page-btn.nav { background: transparent; border-color: transparent; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container min-h-screen pb-32">
+
+<div class="fixed inset-0 z-[-1]">
+  <div class="absolute inset-0 bg-background"></div>
+  <div class="absolute inset-0 mesh-gradient"></div>
+</div>
+
+<header class="fixed top-0 w-full z-50 bg-white/5 backdrop-blur-xl flex justify-between items-center px-6 py-4 border-b border-white/10">
+  <div class="text-2xl font-bold text-white italic font-['Space_Grotesk'] tracking-tight text-shadow-strong">
+    Abuja Weather
+  </div>
+</header>
+
+<main class="pt-24 px-6 max-w-4xl mx-auto space-y-10">
+
+  <section class="space-y-2">
+    <h1 class="font-headline text-5xl font-bold text-white tracking-tight leading-none text-shadow-strong">Weather Journals</h1>
+    <p class="text-white/70 font-semibold tracking-wide text-shadow-strong text-sm">Daily forecasts for the Federal Capital Territory</p>
+  </section>
+
+  <div id="loading-state" class="glass-card rounded-[2rem] p-12 text-center space-y-4">
+    <div class="w-8 h-8 border-2 border-white/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+    <p class="font-body text-on-surface-variant text-sm">Loading today's forecast…</p>
+  </div>
+
+  <div id="error-state" class="hidden glass-card rounded-[2rem] p-12 text-center space-y-4">
+    <span class="material-symbols-outlined text-4xl text-on-surface-variant">cloud_off</span>
+    <p class="font-body text-on-surface-variant">Failed to load article. Please try again.</p>
+    <button onclick="retryLoad()" class="px-4 py-2 bg-primary/20 border border-primary/30 rounded-full text-primary text-sm font-semibold hover:bg-primary/30 transition-colors">
+      Retry
+    </button>
+  </div>
+
+  <article id="article-container" class="hidden glass-card rounded-[2rem] overflow-hidden shadow-2xl shadow-black/60">
+
+    <div class="relative h-48 w-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-end">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+      <div class="absolute bottom-6 left-8 right-8">
+        <span id="article-badge" class="bg-primary/30 text-white border border-primary/40 px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase mb-3 inline-block">Today's Forecast</span>
+        <h2 id="article-headline" class="font-headline text-3xl font-bold text-white text-shadow-strong leading-tight"></h2>
+      </div>
+    </div>
+
+    <div class="p-8 space-y-8">
+
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1;">person</span>
+          </div>
+          <div>
+            <p class="font-label text-xs font-bold text-on-surface">Abuja Weather Desk</p>
+            <p id="article-date" class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest"></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a id="share-x" href="#" target="_blank" class="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-on-surface-variant text-xs font-semibold hover:border-white/30 transition-colors">Share ✕</a>
+          <a id="share-wa" href="#" target="_blank" class="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-on-surface-variant text-xs font-semibold hover:border-white/30 transition-colors">WhatsApp</a>
+        </div>
+      </div>
+
+      <div id="in-brief" class="hidden p-5 bg-primary/10 rounded-2xl border border-primary/20">
+        <p class="font-label text-xs font-bold uppercase tracking-widest text-primary mb-2">In Brief</p>
+        <p id="in-brief-text" class="font-body text-sm text-on-surface leading-relaxed"></p>
+      </div>
+
+      <div id="article-body" class="article-body"></div>
+
+      <div class="pt-4 border-t border-white/10 flex items-center justify-between flex-wrap gap-3">
+        <p class="font-body text-xs text-on-surface-variant">Each generation pulls live weather data — articles vary each time.</p>
+        <button id="regen-btn" onclick="handleRegen()" class="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/30 rounded-full text-primary text-xs font-bold hover:bg-primary/30 transition-colors">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Regenerate
+        </button>
+      </div>
+
+    </div>
+  </article>
+
+  <nav id="archive-nav" class="hidden glass-card rounded-2xl p-6 space-y-4">
+    <h3 class="font-headline font-bold text-sm tracking-tight text-on-surface-variant uppercase tracking-widest">Past Forecasts</h3>
+    <div id="pagination" class="flex flex-wrap gap-2 items-center"></div>
+  </nav>
+
+</main>
+
+<!-- Bottom Nav - Current, Alerts, Articles (NO FORECAST) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-8 pt-4 bg-slate-900/60 backdrop-blur-3xl rounded-t-[2rem] border-t border-white/20 shadow-[0_-8px_48px_rgba(0,0,0,0.4)]">
+  <a class="flex flex-col items-center justify-center text-slate-200 px-6 py-2 hover:bg-white/10 transition-colors active:scale-95" href="index.html">
+    <span class="material-symbols-outlined mb-1">wb_sunny</span>
+    <span class="font-['Inter'] text-[10px] uppercase tracking-widest font-semibold">Current</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-slate-200 px-6 py-2 hover:bg-white/10 transition-colors active:scale-95" href="alerts.html">
+    <span class="material-symbols-outlined mb-1">warning</span>
+    <span class="font-['Inter'] text-[10px] uppercase tracking-widest font-semibold">Alerts</span>
+  </a>
+  <a class="flex flex-col items-center justify-center bg-cyan-400 text-on-secondary-fixed rounded-2xl px-6 py-2 border border-white/20 active:scale-95 shadow-lg shadow-cyan-400/30" href="articles.html">
+    <span class="material-symbols-outlined mb-1" style="font-variation-settings:'FILL' 1;">menu_book</span>
+    <span class="font-['Inter'] text-[10px] uppercase tracking-widest font-semibold">Articles</span>
+  </a>
+</nav>
+
+<script>
+const RENDER_URL = 'https://weather-project-237m.onrender.com';
+const GITHUB_ARTICLES = 'https://raw.githubusercontent.com/faysal-MMII/abuja-weather-articles/main/articles';
+const GITHUB_API = 'https://api.github.com/repos/faysal-MMII/abuja-weather-articles/contents/articles';
+
+let articleDates = [];
+let currentIndex = 0;
+
+function parseArticle(raw) {
+  const lines = raw.split('\n');
+  let briefLine = '';
+  let bodyLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().toLowerCase().startsWith('in brief:')) {
+      briefLine = lines[i].trim().replace(/^in brief:\s*/i, '');
+      bodyLines = lines.slice(i + 1);
+      break;
+    }
+  }
+  if (!briefLine) bodyLines = lines;
+
+  let bodyHTML = '';
+  let currentPara = '';
+
+  function flushPara() {
+    if (currentPara.trim()) {
+      bodyHTML += `<p>${currentPara.trim()}</p>`;
+      currentPara = '';
+    }
+  }
+
+  for (const line of bodyLines) {
+    const trimmed = line.trim();
+    if (!trimmed) { flushPara(); continue; }
+
+    if (trimmed.startsWith('###')) {
+      flushPara();
+      bodyHTML += `<h3>${trimmed.replace(/^###\s*/, '')}</h3>`;
+      continue;
+    }
+
+    if (trimmed.includes('[MAP:')) {
+      const parts = trimmed.split(/(\[MAP:[^\]]+\])/);
+      for (const part of parts) {
+        if (part.startsWith('[MAP:')) {
+          flushPara();
+          const desc = part.replace(/^\[MAP:\s*/i, '').replace(/\]$/, '').trim();
+          bodyHTML += `<div class="map-placeholder">📡 ${desc}</div>`;
+        } else if (part.trim()) {
+          currentPara += (currentPara ? ' ' : '') + part.trim();
+        }
+      }
+    } else {
+      currentPara += (currentPara ? ' ' : '') + trimmed;
+    }
+  }
+  flushPara();
+
+  return { briefLine, bodyHTML };
+}
+
+function extractHeadline(raw) {
+  const afterBrief = raw.replace(/^.*in brief:.*\n/i, '').trim();
+  const firstSentence = afterBrief.split(/[.!?]/)[0].trim();
+  if (firstSentence && firstSentence.length > 20 && firstSentence.length < 120) {
+    return firstSentence;
+  }
+  return "Today's Abuja Weather Forecast";
+}
+
+function renderArticle(raw, date) {
+  const { briefLine, bodyHTML } = parseArticle(raw);
+
+  const dateObj = new Date(date + 'T12:00:00');
+  const isToday = date === new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+
+  document.getElementById('article-badge').textContent = isToday ? "Today's Forecast" : dateObj.toLocaleDateString('en-NG', { weekday:'long' });
+  document.getElementById('article-headline').textContent = extractHeadline(raw);
+  document.getElementById('article-date').textContent = dateObj.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  if (briefLine) {
+    document.getElementById('in-brief-text').textContent = briefLine;
+    document.getElementById('in-brief').classList.remove('hidden');
+  } else {
+    document.getElementById('in-brief').classList.add('hidden');
+  }
+
+  document.getElementById('article-body').innerHTML = bodyHTML;
+
+  const url = encodeURIComponent(location.href);
+  const title = encodeURIComponent(`Abuja Weather — ${dateObj.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`);
+  document.getElementById('share-x').href = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+  document.getElementById('share-wa').href = `https://wa.me/?text=${title}%20${url}`;
+
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('error-state').classList.add('hidden');
+  document.getElementById('article-container').classList.remove('hidden');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadArticle(date) {
+  document.getElementById('article-container').classList.add('hidden');
+  document.getElementById('error-state').classList.add('hidden');
+  document.getElementById('loading-state').classList.remove('hidden');
+
+  try {
+    const res = await fetch(`${GITHUB_ARTICLES}/${date}.json`);
+    if (!res.ok) throw new Error('Not found');
+    const json = await res.json();
+    renderArticle(json.article, date);
+    updatePagination();
+  } catch(e) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+  }
+}
+
+async function generateFresh() {
+  try {
+    const weatherRes = await fetch(`${RENDER_URL}/api/weather`);
+    const weatherData = await weatherRes.json();
+    const c = weatherData.forecast.current;
+    const d = weatherData.forecast.daily;
+
+    const now = new Date();
+    const mo = now.getMonth() + 1;
+
+    let season = '';
+    if (mo >= 11 || mo <= 2) season = 'harmattan season — dry, dusty northeast trade winds dominate';
+    else if (mo >= 3 && mo <= 5) season = 'the pre-rains transition — heat builds, humidity rises';
+    else if (mo >= 6 && mo <= 9) season = 'the rainy season — afternoon downpours are common';
+    else season = 'the October–November transition back toward harmattan';
+
+    const windDirs = ['N','NE','E','SE','S','SW','W','NW'];
+    const windDirStr = windDirs[Math.round(c.wind_direction_10m/45)%8];
+    const weatherDescLocal = {0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',45:'Foggy',51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',80:'Rain Showers',81:'Heavy Showers',82:'Violent Showers',95:'Thunderstorm',96:'Thunderstorm w/Hail',99:'Severe Thunderstorm'};
+
+    const dayLines = d.time.map((date, i) => {
+      const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : new Date(date+'T12:00:00').toLocaleDateString('en-NG',{weekday:'long'});
+      return `  ${label}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${weatherDescLocal[d.weather_code[i]]||'variable'}, ${d.precipitation_probability_max[i]||0}% rain chance`;
+    }).join('\n');
+
+    const prompt = `You are the voice of "Abuja Weather", a trusted local weather blog covering Abuja, Nigeria. Write daily forecast posts in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
+
+Today is ${now.toLocaleDateString('en-NG',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}. Abuja is in ${season}.
+
+CURRENT: ${Math.round(c.temperature_2m)}°C, feels like ${Math.round(c.apparent_temperature)}°C, ${weatherDescLocal[c.weather_code]||'variable'}, humidity ${c.relative_humidity_2m}%, wind ${Math.round(c.wind_speed_10m)} km/h from ${windDirStr}, UV ${Math.round(c.uv_index||0)}.
+
+7-DAY FORECAST:
+${dayLines}
+
+INSTRUCTIONS: Start with "In brief:" summary sentence. Write 8-12 paragraphs, 600-900 words. Use ### for day headers. Insert [MAP: description] placeholders 1-2 times. Reference Abuja landmarks naturally. No em-dashes. No AI clichés. Output article text only.`;
+
+    const res = await fetch(`${RENDER_URL}/api/forecast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    return data.text;
+  } catch(e) {
+    throw new Error('Generation failed');
+  }
+}
+
+function updatePagination() {
+  const nav = document.getElementById('archive-nav');
+  const pagination = document.getElementById('pagination');
+  const total = articleDates.length;
+
+  if (total <= 1) { nav.classList.add('hidden'); return; }
+  nav.classList.remove('hidden');
+
+  let pages = new Set([0, total-1, currentIndex]);
+  if (currentIndex > 0) pages.add(currentIndex - 1);
+  if (currentIndex < total-1) pages.add(currentIndex + 1);
+  const sorted = [...pages].sort((a,b) => b - a);
+
+  let html = '';
+  if (currentIndex < total-1) {
+    html += `<a href="#" class="page-btn nav" onclick="navigateTo(${currentIndex+1});return false;">← Older</a>`;
+  }
+
+  let prev = null;
+  for (const i of sorted) {
+    if (prev !== null && prev - i > 1) html += `<span style="color:#849396;font-size:0.8rem;padding:0 4px">…</span>`;
+    const isActive = i === currentIndex;
+    const date = articleDates[i];
+    const dateObj = new Date(date + 'T12:00:00');
+    const label = i === 0 ? 'Today' : dateObj.toLocaleDateString('en-NG',{month:'short',day:'numeric'});
+    html += `<a href="#" class="page-btn ${isActive ? 'active' : ''}" onclick="navigateTo(${i});return false;">${label}</a>`;
+    prev = i;
+  }
+
+  if (currentIndex > 0) {
+    html += `<a href="#" class="page-btn nav" onclick="navigateTo(${currentIndex-1});return false;">Newer →</a>`;
+  }
+
+  pagination.innerHTML = html;
+}
+
+async function navigateTo(index) {
+  currentIndex = index;
+  await loadArticle(articleDates[index]);
+}
+
+async function retryLoad() {
+  await loadArticle(articleDates[currentIndex]);
+}
+
+async function handleRegen() {
+  const btn = document.getElementById('regen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Writing…';
+
+  document.getElementById('article-container').classList.add('hidden');
+  document.getElementById('loading-state').classList.remove('hidden');
+
+  try {
+    const raw = await generateFresh();
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+    renderArticle(raw, today);
+  } catch(e) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span class="material-symbols-outlined text-sm">refresh</span> Regenerate';
+}
+
+(async () => {
+  try {
+    const res = await fetch(GITHUB_API, {
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    const files = await res.json();
+    articleDates = files
+      .filter(f => f.name.endsWith('.json'))
+      .map(f => f.name.replace('.json',''))
+      .sort()
+      .reverse();
+
+    if (!articleDates.length) throw new Error('No articles found');
+
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+    const todayIndex = articleDates.indexOf(today);
+    currentIndex = todayIndex >= 0 ? todayIndex : 0;
+
+    const targetDate = articleDates[currentIndex];
+    const articleRes = await fetch(`${GITHUB_ARTICLES}/${targetDate}.json`);
+
+    if (articleRes.ok) {
+      const json = await articleRes.json();
+      renderArticle(json.article, targetDate);
+    } else {
+      const raw = await generateFresh();
+      renderArticle(raw, today);
+    }
+
+    updatePagination();
+  } catch(err) {
+    console.error(err);
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+  }
+})();
+</script>
+</body>
+</html>

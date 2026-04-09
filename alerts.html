@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alerts — Abuja Weather</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "on-tertiary-fixed": "#2b1700",
+        "on-secondary": "#1b247f",
+        "surface-dim": "#0f1418",
+        "on-primary-fixed": "#001f24",
+        "primary-fixed": "#9cf0ff",
+        "primary-container": "#00e5ff",
+        "on-error": "#690005",
+        "outline": "#849396",
+        "inverse-primary": "#006875",
+        "surface-container-highest": "#30353a",
+        "on-error-container": "#ffdad6",
+        "outline-variant": "#3b494c",
+        "secondary-fixed": "#e0e0ff",
+        "primary": "#c3f5ff",
+        "inverse-surface": "#dfe3e9",
+        "secondary-container": "#343d96",
+        "surface-container": "#1b2024",
+        "on-primary": "#00363d",
+        "error-container": "#93000a",
+        "on-primary-container": "#00626e",
+        "on-tertiary-container": "#804e00",
+        "surface-container-high": "#262b2f",
+        "on-surface": "#dfe3e9",
+        "on-secondary-container": "#a8afff",
+        "tertiary": "#ffe9d5",
+        "on-secondary-fixed-variant": "#343d96",
+        "on-background": "#dfe3e9",
+        "surface-tint": "#00daf3",
+        "inverse-on-surface": "#2c3135",
+        "on-secondary-fixed": "#000767",
+        "background": "#0f1418",
+        "secondary": "#bdc2ff",
+        "tertiary-container": "#ffc687",
+        "on-primary-fixed-variant": "#004f58",
+        "error": "#ffb4ab",
+        "surface-container-low": "#171c20",
+        "secondary-fixed-dim": "#bdc2ff",
+        "primary-fixed-dim": "#00daf3",
+        "on-surface-variant": "#bac9cc",
+        "surface-container-lowest": "#0a0f13",
+        "on-tertiary": "#482900",
+        "tertiary-fixed-dim": "#ffb866",
+        "on-tertiary-fixed-variant": "#673d00",
+        "surface-bright": "#353a3e",
+        "tertiary-fixed": "#ffddba",
+        "surface-variant": "#30353a",
+        "surface": "#0f1418"
+      },
+      fontFamily: {
+        "headline": ["Space Grotesk"],
+        "body": ["Inter"],
+        "label": ["Inter"]
+      },
+      borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+    }
+  }
+}
+</script>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #0f1418;
+  background-image: linear-gradient(135deg, #0f1418 0%, #141e26 50%, #0f1418 100%);
+  font-family: "Inter", sans-serif;
+  color: #dfe3e9;
+}
+.overlay-dim {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(15,20,24,0.4), rgba(15,20,24,0.7));
+}
+.glass-card {
+  background: rgba(15, 20, 24, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.alert-severe {
+  border-color: rgba(255,180,171,0.3);
+  background: rgba(147,0,10,0.15);
+}
+.alert-warning {
+  border-color: rgba(255,198,135,0.3);
+  background: rgba(255,198,135,0.08);
+}
+.alert-advisory {
+  border-color: rgba(189,194,255,0.3);
+  background: rgba(189,194,255,0.06);
+}
+.traffic-slow { color: #fbbf24; }
+.traffic-heavy { color: #f87171; }
+.traffic-clear { color: #34d399; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.pulse-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+</style>
+</head>
+<body class="relative">
+<div class="overlay-dim"></div>
+
+<!-- Header -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-6 bg-transparent">
+  <div class="flex items-center gap-4">
+    <button class="scale-95 active:transition-transform hover:opacity-80 transition-opacity">
+      <span class="material-symbols-outlined text-white">menu</span>
+    </button>
+    <h1 class="font-headline font-bold tracking-tight text-xl text-white">Alerts</h1>
+  </div>
+  <div class="flex items-center gap-3">
+    <span id="last-updated" class="font-body text-xs text-on-surface-variant hidden"></span>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="pt-24 pb-32 px-6 max-w-5xl mx-auto space-y-8">
+
+  <!-- Page intro -->
+  <section class="space-y-1">
+    <p class="font-body text-on-surface-variant text-sm">Abuja, FCT · <span id="today-date">--</span></p>
+    <p class="font-body text-xs text-on-surface-variant/60">Alerts are generated automatically from live weather and traffic data.</p>
+  </section>
+
+  <!-- Weather Alerts Section -->
+  <section class="space-y-4">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-amber-400" style="font-variation-settings:'FILL' 1;">thunderstorm</span>
+      <h2 class="font-headline font-bold text-lg tracking-tight">Weather Alerts</h2>
+      <div id="weather-live-dot" class="pulse-dot bg-amber-400 ml-auto hidden"></div>
+    </div>
+    <div id="weather-alerts-container" class="space-y-4">
+      <!-- Skeleton -->
+      <div class="glass-card rounded-2xl p-5 space-y-3">
+        <span class="skeleton inline-block w-40 h-5">&nbsp;</span>
+        <span class="skeleton inline-block w-full h-4">&nbsp;</span>
+        <span class="skeleton inline-block w-3/4 h-4">&nbsp;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Traffic Alerts Section -->
+  <section class="space-y-4">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-blue-400" style="font-variation-settings:'FILL' 1;">traffic</span>
+      <h2 class="font-headline font-bold text-lg tracking-tight">Road Conditions</h2>
+      <div id="traffic-live-dot" class="pulse-dot bg-blue-400 ml-auto hidden"></div>
+    </div>
+    <div id="traffic-container" class="space-y-4">
+      <!-- Skeleton -->
+      <div class="glass-card rounded-2xl p-5 space-y-3">
+        <span class="skeleton inline-block w-40 h-5">&nbsp;</span>
+        <span class="skeleton inline-block w-full h-4">&nbsp;</span>
+      </div>
+      <div class="glass-card rounded-2xl p-5 space-y-3">
+        <span class="skeleton inline-block w-40 h-5">&nbsp;</span>
+        <span class="skeleton inline-block w-full h-4">&nbsp;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- All-clear state (shown when no alerts) -->
+  <section id="all-clear" class="hidden">
+    <div class="glass-card rounded-3xl p-10 flex flex-col items-center justify-center text-center space-y-4">
+      <span class="material-symbols-outlined text-6xl text-emerald-400" style="font-variation-settings:'FILL' 1;">check_circle</span>
+      <h3 class="font-headline font-bold text-xl text-emerald-400">All Clear</h3>
+      <p class="font-body text-on-surface-variant text-sm max-w-xs leading-relaxed">No active weather or traffic alerts for Abuja right now. Conditions are normal.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 backdrop-blur-3xl border-t border-white/10 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(0,0,0,0.5)] bg-white/5">
+  <a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:opacity-80 transition-opacity scale-95 active:scale-90" href="index.html">
+    <span class="material-symbols-outlined">cloud</span>
+    <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">Current</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-amber-400 bg-white/10 rounded-2xl px-4 py-2 scale-95 active:scale-90 transition-all" href="alerts.html">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">warning</span>
+    <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">Alerts</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:opacity-80 transition-opacity scale-95 active:scale-90" href="articles.html">
+    <span class="material-symbols-outlined">newspaper</span>
+    <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">Articles</span>
+  </a>
+</nav>
+
+<script>
+const weatherDesc = {
+  0:'Clear Sky',1:'Mainly Clear',2:'Partly Cloudy',3:'Overcast',
+  45:'Foggy',48:'Freezing Fog',51:'Light Drizzle',53:'Drizzle',
+  55:'Heavy Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',
+  71:'Light Snow',73:'Snow',75:'Heavy Snow',
+  80:'Rain Showers',81:'Heavy Showers',82:'Violent Showers',
+  95:'Thunderstorm',96:'Thunderstorm w/Hail',99:'Severe Thunderstorm'
+};
+
+// Set today's date
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-NG', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+});
+
+// Update timestamp
+function setUpdated() {
+  const el = document.getElementById('last-updated');
+  el.textContent = `Updated ${new Date().toLocaleTimeString('en-NG', {hour:'2-digit',minute:'2-digit',hour12:true})}`;
+  el.classList.remove('hidden');
+}
+
+/* ── Weather alert evaluation ── */
+function evaluateWeatherAlerts(forecast) {
+  const alerts = [];
+  const daily = forecast.daily;
+  const current = forecast.current;
+
+  const code = daily.weather_code[0];
+  const rainChance = daily.precipitation_probability_max[0] || 0;
+  const maxTemp = daily.temperature_2m_max[0];
+  const wind = current.wind_speed_10m;
+  const humidity = current.relative_humidity_2m;
+  const uv = Math.round(current.uv_index || 0);
+  const rainSum = daily.precipitation_sum[0] || 0;
+
+  // Thunderstorm — Severe
+  if (code === 95 || code === 96 || code === 99) {
+    alerts.push({
+      severity: 'severe',
+      icon: 'thunderstorm',
+      iconColor: 'text-red-400',
+      title: 'Thunderstorm Warning',
+      detail: `Thunderstorms are expected today with ${rainChance}% rain probability${rainSum > 0 ? ` and ${rainSum.toFixed(1)}mm of rainfall` : ''}. Seek shelter immediately if outdoors. Avoid open areas and tall structures.`,
+      advice: 'Stay indoors · Avoid flooded roads · Charge devices now'
+    });
+  }
+
+  // Heavy rain — Warning
+  if (rainChance >= 70 && code !== 95 && code !== 96 && code !== 99) {
+    alerts.push({
+      severity: 'warning',
+      icon: 'rainy',
+      iconColor: 'text-blue-400',
+      title: 'Heavy Rain Expected',
+      detail: `${rainChance}% chance of rain today${rainSum > 0 ? ` with up to ${rainSum.toFixed(1)}mm expected` : ''}. Low-lying areas of Abuja — including parts of Lugbe, Karu, and Nyanya — may experience localised flooding.`,
+      advice: 'Avoid low-lying roads · Keep gutters clear · Travel early'
+    });
+  }
+
+  // Extreme heat — Warning
+  if (maxTemp >= 38) {
+    alerts.push({
+      severity: 'warning',
+      icon: 'thermostat',
+      iconColor: 'text-orange-400',
+      title: 'Extreme Heat Warning',
+      detail: `High of ${Math.round(maxTemp)}°C expected today. Conditions are dangerous for extended outdoor activity. Those in Gwarinpa, Kuje, and other areas with limited shade should take extra precautions.`,
+      advice: 'Stay hydrated · Limit outdoor exposure · Check on elderly neighbours'
+    });
+  }
+
+  // High winds — Advisory
+  if (wind >= 40) {
+    alerts.push({
+      severity: 'advisory',
+      icon: 'air',
+      iconColor: 'text-teal-400',
+      title: 'High Wind Advisory',
+      detail: `Wind speeds of ${Math.round(wind)} km/h currently recorded. Loose objects, signage, and temporary structures may be at risk. Motorcyclists and cyclists should exercise caution.`,
+      advice: 'Secure loose items · Motorcyclists take care · Watch for falling debris'
+    });
+  }
+
+  // Harmattan conditions — Advisory
+  if (humidity < 20 && uv >= 6) {
+    alerts.push({
+      severity: 'advisory',
+      icon: 'wb_sunny',
+      iconColor: 'text-yellow-400',
+      title: 'Harmattan Advisory',
+      detail: `Humidity at ${humidity}% with UV index of ${uv}. Dry, dusty Harmattan conditions are affecting Abuja. Visibility on major roads including the Airport Road may be reduced.`,
+      advice: 'Use sunscreen · Moisturise · Drink extra water · Drive carefully'
+    });
+  }
+
+  // Moderate rain — Advisory
+  if (rainChance >= 40 && rainChance < 70) {
+    alerts.push({
+      severity: 'advisory',
+      icon: 'grain',
+      iconColor: 'text-blue-300',
+      title: 'Rain Advisory',
+      detail: `${rainChance}% chance of rain today. Showers are possible, particularly in the afternoon. Carry an umbrella if heading out across Wuse, Maitama, or Garki.`,
+      advice: 'Carry an umbrella · Allow extra travel time'
+    });
+  }
+
+  return alerts;
+}
+
+/* ── Render weather alerts ── */
+function renderWeatherAlerts(alerts) {
+  const container = document.getElementById('weather-alerts-container');
+
+  if (alerts.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card rounded-2xl p-5 flex items-center gap-4">
+        <span class="material-symbols-outlined text-emerald-400 text-3xl" style="font-variation-settings:'FILL' 1;">check_circle</span>
+        <div>
+          <p class="font-headline font-bold text-emerald-400">No Weather Alerts</p>
+          <p class="font-body text-on-surface-variant text-sm mt-0.5">Conditions are normal for Abuja today.</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('weather-live-dot').classList.remove('hidden');
+
+  const severityClass = { severe: 'alert-severe', warning: 'alert-warning', advisory: 'alert-advisory' };
+  const severityLabel = { severe: 'SEVERE', warning: 'WARNING', advisory: 'ADVISORY' };
+  const severityLabelColor = { severe: 'text-red-400', warning: 'text-amber-400', advisory: 'text-secondary' };
+
+  container.innerHTML = alerts.map(a => `
+    <div class="glass-card ${severityClass[a.severity]} rounded-2xl p-5 space-y-3">
+      <div class="flex items-start gap-4">
+        <div class="p-2.5 rounded-xl bg-white/5 shrink-0">
+          <span class="material-symbols-outlined ${a.iconColor} text-2xl" style="font-variation-settings:'FILL' 1;">${a.icon}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-label text-[10px] font-bold uppercase tracking-widest ${severityLabelColor[a.severity]}">${severityLabel[a.severity]}</span>
+          </div>
+          <h3 class="font-headline font-bold text-base text-on-surface">${a.title}</h3>
+          <p class="font-body text-on-surface-variant text-sm mt-1.5 leading-relaxed">${a.detail}</p>
+        </div>
+      </div>
+      <div class="border-t border-white/5 pt-3">
+        <p class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant/60 mb-1">What to do</p>
+        <p class="font-body text-xs text-on-surface-variant">${a.advice}</p>
+      </div>
+    </div>`).join('');
+}
+
+/* ── Render traffic ── */
+function renderTraffic(segments) {
+  const container = document.getElementById('traffic-container');
+
+  if (!segments || segments.length === 0) {
+    container.innerHTML = `
+      <div class="glass-card rounded-2xl p-5 flex items-center gap-4">
+        <span class="material-symbols-outlined text-on-surface-variant text-2xl">info</span>
+        <p class="font-body text-on-surface-variant text-sm">Traffic data unavailable right now.</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('traffic-live-dot').classList.remove('hidden');
+
+  container.innerHTML = segments.map(seg => {
+    let statusClass, statusLabel, statusIcon, barWidth;
+
+    if (seg.congestion >= 0.7) {
+      statusClass = 'traffic-heavy'; statusLabel = 'Heavy Traffic'; statusIcon = 'traffic'; barWidth = 90;
+    } else if (seg.congestion >= 0.4) {
+      statusClass = 'traffic-slow'; statusLabel = 'Slow Moving'; statusIcon = 'speed'; barWidth = 55;
+    } else {
+      statusClass = 'traffic-clear'; statusLabel = 'Clear'; statusIcon = 'directions_car'; barWidth = 20;
+    }
+
+    const speedPct = Math.min(100, Math.round((seg.currentSpeed / seg.freeFlowSpeed) * 100));
+
+    return `
+      <div class="glass-card rounded-2xl p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined ${statusClass} text-xl" style="font-variation-settings:'FILL' 1;">${statusIcon}</span>
+            <div>
+              <p class="font-headline font-bold text-sm">${seg.name}</p>
+              <p class="font-body text-[10px] text-on-surface-variant uppercase tracking-wider mt-0.5">${statusLabel}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-headline font-bold text-lg ${statusClass}">${Math.round(seg.currentSpeed)} <span class="text-xs font-normal text-on-surface-variant">km/h</span></p>
+            <p class="font-body text-[10px] text-on-surface-variant">Free flow: ${Math.round(seg.freeFlowSpeed)} km/h</p>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <div class="flex justify-between text-[10px] text-on-surface-variant font-label uppercase tracking-widest">
+            <span>Congestion</span><span>${Math.round(seg.congestion * 100)}%</span>
+          </div>
+          <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-700 ${seg.congestion >= 0.7 ? 'bg-red-400' : seg.congestion >= 0.4 ? 'bg-yellow-400' : 'bg-emerald-400'}" style="width:${barWidth}%"></div>
+          </div>
+        </div>
+        ${seg.floodRisk ? `
+        <div class="border-t border-white/5 pt-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-400 text-sm" style="font-variation-settings:'FILL' 1;">water</span>
+          <p class="font-body text-xs text-blue-300">Flood risk — heavy rain expected on this route today.</p>
+        </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+/* ── Check all-clear ── */
+function checkAllClear(weatherAlerts, trafficSegments) {
+  const noWeather = weatherAlerts.length === 0;
+  const noTraffic = !trafficSegments || trafficSegments.every(s => s.congestion < 0.4);
+  if (noWeather && noTraffic) {
+    document.getElementById('all-clear').classList.remove('hidden');
+  }
+}
+
+/* ── Boot ── */
+(async () => {
+  try {
+    // Fetch weather and traffic in parallel
+    const [weatherData, trafficData] = await Promise.all([
+      fetch('https://weather-project-237m.onrender.com/api/weather').then(r => r.json()),
+      fetch('https://weather-project-237m.onrender.com/api/traffic').then(r => r.json()).catch(() => null)
+    ]);
+
+    const weatherAlerts = evaluateWeatherAlerts(weatherData.forecast);
+    renderWeatherAlerts(weatherAlerts);
+
+    // Pass rain flag to traffic for flood risk annotation
+    const rainToday = weatherData.forecast.daily.precipitation_probability_max[0] >= 70;
+    const segments = trafficData ? trafficData.map(s => ({ ...s, floodRisk: rainToday && s.congestion >= 0.4 })) : null;
+    renderTraffic(segments);
+
+    checkAllClear(weatherAlerts, segments);
+    setUpdated();
+
+  } catch(err) {
+    console.error('Alerts load failed:', err);
+    document.getElementById('weather-alerts-container').innerHTML = `
+      <div class="glass-card rounded-2xl p-5">
+        <p class="font-body text-on-surface-variant text-sm">Unable to load alerts. Please try again shortly.</p>
+      </div>`;
+  }
+})();
+</script>
+</body>
+</html>
