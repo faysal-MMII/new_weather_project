@@ -468,11 +468,9 @@ function checkAllClear(weatherAlerts, trafficSegments) {
 /* ── Boot ── */
 (async () => {
   try {
-    // Fetch weather and traffic in parallel
-    const [weatherData, trafficData] = await Promise.all([
-      fetch('https://weather-project-237m.onrender.com/api/weather').then(r => r.json()),
-      fetch('https://weather-project-237m.onrender.com/api/traffic').then(r => r.json()).catch(() => null)
-    ]);
+    // Fetch weather first to wake up Render, then traffic
+    const weatherData = await fetch('https://weather-project-237m.onrender.com/api/weather').then(r => r.json());
+    const trafficData = await fetch('https://weather-project-237m.onrender.com/api/traffic').then(r => r.json()).catch(() => null);
 
     // Add validation check before accessing forecast
     if (!weatherData.forecast?.current) throw new Error('Weather unavailable');
