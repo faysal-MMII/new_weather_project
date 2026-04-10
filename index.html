@@ -476,10 +476,10 @@ function populateWeekly(daily) {
     
     const { current, daily } = data.forecast;
 
-    // Hide error state if visible, show content
+    // Hide error state if visible, show content (but exclude alert-card from auto-show)
     document.getElementById('error-state').classList.add('hidden');
     document.querySelectorAll('#main-content > section').forEach(section => {
-      if (section.id !== 'error-state') {
+      if (section.id !== 'error-state' && section.id !== 'alert-card') {
         section.classList.remove('hidden');
       }
     });
