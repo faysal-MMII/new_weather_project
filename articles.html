@@ -371,6 +371,10 @@ async function generateFresh() {
   try {
     const weatherRes = await fetch(`${RENDER_URL}/api/weather`);
     const weatherData = await weatherRes.json();
+    
+    // Add validation check before accessing forecast.current
+    if (!weatherData.forecast?.current) throw new Error('Weather unavailable');
+    
     const c = weatherData.forecast.current;
     const d = weatherData.forecast.daily;
 

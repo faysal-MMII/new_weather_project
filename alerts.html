@@ -206,6 +206,18 @@ body {
     </div>
   </section>
 
+  <!-- Error state (hidden by default) -->
+  <div id="error-state" class="hidden glass-card rounded-3xl p-10 text-center">
+    <div class="flex flex-col items-center gap-4">
+      <span class="material-symbols-outlined text-5xl text-red-400" style="font-variation-settings:'FILL' 1;">cloud_off</span>
+      <h3 class="font-headline font-bold text-xl text-white">Unable to Load Alerts</h3>
+      <p class="font-body text-on-surface-variant text-sm max-w-md">The weather service is temporarily unavailable. Please try again shortly.</p>
+      <button onclick="location.reload()" class="mt-2 px-5 py-2 bg-primary/20 border border-primary/30 rounded-full text-primary text-sm font-semibold hover:bg-primary/30 transition-colors">
+        Retry
+      </button>
+    </div>
+  </div>
+
 </main>
 
 <!-- Bottom Nav -->
@@ -244,6 +256,14 @@ function setUpdated() {
   const el = document.getElementById('last-updated');
   el.textContent = `Updated ${new Date().toLocaleTimeString('en-NG', {hour:'2-digit',minute:'2-digit',hour12:true})}`;
   el.classList.remove('hidden');
+}
+
+function showErrorState() {
+  // Hide all alert sections
+  const sections = document.querySelectorAll('main > section:not(#error-state)');
+  sections.forEach(section => section.classList.add('hidden'));
+  // Show error state
+  document.getElementById('error-state').classList.remove('hidden');
 }
 
 /* ── Weather alert evaluation ── */
@@ -404,8 +424,6 @@ function renderTraffic(segments) {
       statusClass = 'traffic-clear'; statusLabel = 'Clear'; statusIcon = 'directions_car'; barWidth = 20;
     }
 
-    const speedPct = Math.min(100, Math.round((seg.currentSpeed / seg.freeFlowSpeed) * 100));
-
     return `
       <div class="glass-card rounded-2xl p-5 space-y-3">
         <div class="flex items-center justify-between">
@@ -456,6 +474,9 @@ function checkAllClear(weatherAlerts, trafficSegments) {
       fetch('https://weather-project-237m.onrender.com/api/traffic').then(r => r.json()).catch(() => null)
     ]);
 
+    // Add validation check before accessing forecast
+    if (!weatherData.forecast?.current) throw new Error('Weather unavailable');
+    
     const weatherAlerts = evaluateWeatherAlerts(weatherData.forecast);
     renderWeatherAlerts(weatherAlerts);
 
@@ -469,10 +490,7 @@ function checkAllClear(weatherAlerts, trafficSegments) {
 
   } catch(err) {
     console.error('Alerts load failed:', err);
-    document.getElementById('weather-alerts-container').innerHTML = `
-      <div class="glass-card rounded-2xl p-5">
-        <p class="font-body text-on-surface-variant text-sm">Unable to load alerts. Please try again shortly.</p>
-      </div>`;
+    showErrorState();
   }
 })();
 </script>
