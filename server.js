@@ -102,7 +102,7 @@ async function generateAndSave() {
     let trafficSummary = '';
     try {
       // Use the confirmed working coordinate for traffic summary
-      const trafficRes = await fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=9.0579,7.4891&key=${process.env.TOMTOM_API_KEY}`);
+      const trafficRes = await fetch(`https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point=9.0579,7.4891&key=${process.env.TOMTOM_TRAFFIC_API}`);
       if (trafficRes.ok) {
         const trafficData = await trafficRes.json();
         const fd = trafficData.flowSegmentData;
@@ -165,7 +165,7 @@ app.get('/api/traffic', async (req, res) => {
       return res.json(trafficCache);
     }
 
-    const apiKey = process.env.TOMTOM_API_KEY;
+    const apiKey = process.env.TOMTOM_TRAFFIC_API;
     if (!apiKey) {
       return res.status(500).json({ error: 'TomTom API key not configured' });
     }
