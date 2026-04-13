@@ -276,7 +276,7 @@ body {
 
 </main>
 
-<!-- Bottom Nav - Current, Alerts, Articles (NO FORECAST) -->
+<!-- Bottom Nav - Current, Alerts, Articles -->
 <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 backdrop-blur-3xl border-t border-white/10 rounded-t-[2rem] shadow-[0_-8px_32px_rgba(0,0,0,0.5)] bg-white/5">
   <a class="flex flex-col items-center justify-center text-cyan-400 bg-white/10 rounded-2xl px-4 py-2 scale-95 active:scale-90 transition-all" href="index.html">
     <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">cloud</span>
@@ -337,18 +337,45 @@ function dayLabel(isoStr, i) {
 }
 
 function showErrorState() {
-  // Hide all weather content sections
+  // Hide all weather content sections except error state
   const sections = document.querySelectorAll('#main-content > section:not(#error-state)');
   sections.forEach(section => section.classList.add('hidden'));
   // Show error state
   document.getElementById('error-state').classList.remove('hidden');
 }
 
-/* ── Fetch from server cache ── */
+/* ── Enhanced fetchWeather with browser caching (sessionStorage, 15 min) ── */
 async function fetchWeather() {
+  const CACHE_KEY = 'weather_cache';
+  const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
+  // 1. Check sessionStorage for fresh cached data
+  try {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { timestamp, data } = JSON.parse(cached);
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        console.log('Serving weather from browser cache');
+        return data;
+      }
+    }
+  } catch (_) {
+    // Ignore parsing errors, fallback to network fetch
+  }
+
+  // 2. No valid cache → fetch from backend
   const res = await fetch('https://weather-project-237m.onrender.com/api/weather');
   if (!res.ok) throw new Error('Weather fetch failed');
-  return res.json();
+  const data = await res.json();
+
+  // 3. Store fresh data in sessionStorage (best-effort)
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+  } catch (_) {
+    // Storage full or disabled; ignore
+  }
+
+  return data;
 }
 
 /* ── Populate UI ── */
@@ -370,7 +397,10 @@ function populateAlert(daily) {
   const rainChance = daily.precipitation_probability_max[0] || 0;
   const code = daily.weather_code[0];
   const card = document.getElementById('alert-card');
-
+  
+  // Ensure any previous visibility is reset, then conditionally show
+  card.classList.add('hidden');
+  
   if (code === 95 || code === 96 || code === 99) {
     document.getElementById('alert-title').textContent = 'Thunderstorm Warning';
     document.getElementById('alert-msg').textContent = `Thunderstorms are likely today with ${rainChance}% rain probability. Seek shelter if outdoors.`;
@@ -400,11 +430,15 @@ function populateHourly(current, daily) {
     const low = daily.temperature_2m_min[0];
     const peakHour = 14;
     const distFromPeak = Math.abs(hour - peakHour);
-    const temp = Math.round(low + (high - low) * Math.max(0, 1 - distFromPeak / 10));
+    let temp = Math.round(low + (high - low) * Math.max(0, 1 - distFromPeak / 10));
+    // Fallback to current temp for 'now' if needed for realism
+    if (isNow && current.temperature_2m) temp = Math.round(current.temperature_2m);
 
-    const code = hour >= 6 && hour <= 19 ? daily.weather_code[0] : 0;
-    const icon = hour < 6 || hour >= 20 ? 'nights_stay' : (weatherIcon[code] || 'partly_cloudy_day');
-    const iconColor = hour < 6 || hour >= 20 ? 'text-blue-200' : (weatherIconColor[code] || 'text-yellow-400');
+    const code = (hour >= 6 && hour <= 19) ? daily.weather_code[0] : 0;
+    let icon = (hour < 6 || hour >= 20) ? 'nights_stay' : (weatherIcon[code] || 'partly_cloudy_day');
+    // Override for thunderstorms etc
+    if (code === 95 || code === 96 || code === 99) icon = 'thunderstorm';
+    const iconColor = (hour < 6 || hour >= 20) ? 'text-blue-200' : (weatherIconColor[code] || 'text-yellow-400');
 
     const timeStr = isNow ? 'Now' : `${String(hour).padStart(2,'0')}:00`;
 
@@ -439,8 +473,9 @@ function populateWeekly(daily) {
   daily.time.forEach((date, i) => {
     const high = Math.round(allHighs[i]);
     const low = Math.round(allLows[i]);
-    const code = daily.weather_code[i];
-    const icon = weatherIcon[code] || 'partly_cloudy_day';
+    let code = daily.weather_code[i];
+    let icon = weatherIcon[code] || 'partly_cloudy_day';
+    if (code === 95 || code === 96 || code === 99) icon = 'thunderstorm';
     const iconColor = weatherIconColor[code] || 'text-yellow-400';
     const label = dayLabel(date, i);
     const rain = daily.precipitation_probability_max[i] || 0;
@@ -463,27 +498,30 @@ function populateWeekly(daily) {
   });
 }
 
-/* ── Boot ── */
+/* ── Boot: Enhanced with error handling and section visibility ── */
 (async () => {
   try {
+    // Use the caching-enabled fetchWeather
     const data = await fetchWeather();
-    
-    // Check for error response from server
+
+    // Validate response structure
     if (data.error || !data.forecast?.current) {
       console.error('Weather data unavailable:', data.error);
       throw new Error(data.error || 'Weather data unavailable');
     }
-    
+
     const { current, daily } = data.forecast;
 
-    // Hide error state if visible, show content (but exclude alert-card from auto-show)
+    // Hide error state if previously shown, ensure main sections become visible
     document.getElementById('error-state').classList.add('hidden');
+    // Show all content sections except error-state and alert-card (alert-card shown conditionally inside populateAlert)
     document.querySelectorAll('#main-content > section').forEach(section => {
       if (section.id !== 'error-state' && section.id !== 'alert-card') {
         section.classList.remove('hidden');
       }
     });
 
+    // Populate all UI components
     populateHero(current, daily);
     populateAlert(daily);
     populateHourly(current, daily);

@@ -232,7 +232,7 @@ tailwind.config = {
 
 </main>
 
-<!-- Bottom Nav - Current, Alerts, Articles (NO FORECAST) -->
+<!-- Bottom Nav - Current, Alerts, Articles -->
 <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-8 pt-4 bg-slate-900/60 backdrop-blur-3xl rounded-t-[2rem] border-t border-white/20 shadow-[0_-8px_48px_rgba(0,0,0,0.4)]">
   <a class="flex flex-col items-center justify-center text-slate-200 px-6 py-2 hover:bg-white/10 transition-colors active:scale-95" href="index.html">
     <span class="material-symbols-outlined mb-1">wb_sunny</span>
@@ -255,6 +255,24 @@ const GITHUB_API = 'https://api.github.com/repos/faysal-MMII/abuja-weather-artic
 
 let articleDates = [];
 let currentIndex = 0;
+
+// Cache helper functions
+function getCached(key, duration) {
+  try {
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      const { timestamp, data } = JSON.parse(cached);
+      if (Date.now() - timestamp < duration) return data;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function setCached(key, data) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
+  } catch (_) {}
+}
 
 function parseArticle(raw) {
   const lines = raw.split('\n');
@@ -350,18 +368,41 @@ function renderArticle(raw, date) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Updated loadArticle with article caching (sessionStorage)
 async function loadArticle(date) {
   document.getElementById('article-container').classList.add('hidden');
   document.getElementById('error-state').classList.add('hidden');
   document.getElementById('loading-state').classList.remove('hidden');
 
+  const articleCacheKey = 'article_' + date;
+
   try {
-    const res = await fetch(`${GITHUB_ARTICLES}/${date}.json`);
-    if (!res.ok) throw new Error('Not found');
-    const json = await res.json();
-    renderArticle(json.article, date);
+    let articleText = null;
+    // Check cache first
+    try {
+      const cached = sessionStorage.getItem(articleCacheKey);
+      if (cached) {
+        const { data } = JSON.parse(cached);
+        articleText = data;
+        console.log('Serving article from cache:', date);
+      }
+    } catch (_) {}
+
+    // Fetch if not cached
+    if (!articleText) {
+      const res = await fetch(`${GITHUB_ARTICLES}/${date}.json`);
+      if (!res.ok) throw new Error('Not found');
+      const json = await res.json();
+      articleText = json.article;
+      try {
+        sessionStorage.setItem(articleCacheKey, JSON.stringify({ timestamp: Date.now(), data: articleText }));
+      } catch (_) {}
+    }
+
+    renderArticle(articleText, date);
     updatePagination();
   } catch(e) {
+    console.error('Failed to load article:', e);
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('error-state').classList.remove('hidden');
   }
@@ -372,7 +413,6 @@ async function generateFresh() {
     const weatherRes = await fetch(`${RENDER_URL}/api/weather`);
     const weatherData = await weatherRes.json();
     
-    // Add validation check before accessing forecast.current
     if (!weatherData.forecast?.current) throw new Error('Weather unavailable');
     
     const c = weatherData.forecast.current;
@@ -464,6 +504,7 @@ async function retryLoad() {
   await loadArticle(articleDates[currentIndex]);
 }
 
+// Updated handleRegen with correct date reference
 async function handleRegen() {
   const btn = document.getElementById('regen-btn');
   btn.disabled = true;
@@ -474,9 +515,9 @@ async function handleRegen() {
 
   try {
     const raw = await generateFresh();
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
-    renderArticle(raw, today);
+    renderArticle(raw, articleDates[currentIndex]);
   } catch(e) {
+    console.error('Regeneration failed:', e);
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('error-state').classList.remove('hidden');
   }
@@ -485,18 +526,29 @@ async function handleRegen() {
   btn.innerHTML = '<span class="material-symbols-outlined text-sm">refresh</span> Regenerate';
 }
 
+/* ── INTEGRATED CACHING BOOT BLOCK (sessionStorage) ── */
 (async () => {
-  try {
-    const res = await fetch(GITHUB_API, {
-      headers: { 'Accept': 'application/vnd.github+json' }
-    });
-    const files = await res.json();
-    articleDates = files
-      .filter(f => f.name.endsWith('.json'))
-      .map(f => f.name.replace('.json',''))
-      .sort()
-      .reverse();
+  const ARTICLES_LIST_KEY = 'articles_list_cache';
+  const ARTICLE_CACHE_PREFIX = 'article_';
+  const LIST_CACHE_DURATION = 60 * 60 * 1000; // 1 hour for article list
 
+  try {
+    // Cache the article list for 1 hour — new articles only appear once a day
+    let articleDatesCache = getCached(ARTICLES_LIST_KEY, LIST_CACHE_DURATION);
+    if (!articleDatesCache) {
+      const res = await fetch(GITHUB_API, {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      const files = await res.json();
+      articleDatesCache = files
+        .filter(f => f.name.endsWith('.json'))
+        .map(f => f.name.replace('.json', ''))
+        .sort()
+        .reverse();
+      setCached(ARTICLES_LIST_KEY, articleDatesCache);
+    }
+
+    articleDates = articleDatesCache;
     if (!articleDates.length) throw new Error('No articles found');
 
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
@@ -504,19 +556,26 @@ async function handleRegen() {
     currentIndex = todayIndex >= 0 ? todayIndex : 0;
 
     const targetDate = articleDates[currentIndex];
-    const articleRes = await fetch(`${GITHUB_ARTICLES}/${targetDate}.json`);
 
-    if (articleRes.ok) {
-      const json = await articleRes.json();
-      renderArticle(json.article, targetDate);
-    } else {
-      const raw = await generateFresh();
-      renderArticle(raw, today);
+    // Cache individual articles for the session — they never change once written
+    const articleCacheKey = ARTICLE_CACHE_PREFIX + targetDate;
+    let articleText = getCached(articleCacheKey, 24 * 60 * 60 * 1000);
+    if (!articleText) {
+      const articleRes = await fetch(`${GITHUB_ARTICLES}/${targetDate}.json`);
+      if (articleRes.ok) {
+        const json = await articleRes.json();
+        articleText = json.article;
+        setCached(articleCacheKey, articleText);
+      } else {
+        articleText = await generateFresh();
+      }
     }
 
+    renderArticle(articleText, targetDate);
     updatePagination();
+
   } catch(err) {
-    console.error(err);
+    console.error('Boot failed:', err);
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('error-state').classList.remove('hidden');
   }

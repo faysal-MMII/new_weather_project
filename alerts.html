@@ -459,26 +459,58 @@ function renderTraffic(segments) {
 /* ── Check all-clear ── */
 function checkAllClear(weatherAlerts, trafficSegments) {
   const noWeather = weatherAlerts.length === 0;
-  const noTraffic = !trafficSegments || trafficSegments.every(s => s.congestion < 0.4);
+  const noTraffic = !trafficSegments || trafficSegments.length === 0 || trafficSegments.every(s => s.congestion < 0.4);
   if (noWeather && noTraffic) {
     document.getElementById('all-clear').classList.remove('hidden');
   }
 }
 
-/* ── Boot ── */
+/* ============================================================
+   INTEGRATED CACHING BOOT BLOCK (sessionStorage, 5min each)
+   ============================================================ */
 (async () => {
-  try {
-    // Fetch weather first to wake up Render, then traffic
-    const weatherData = await fetch('https://weather-project-237m.onrender.com/api/weather').then(r => r.json());
-    const trafficData = await fetch('https://weather-project-237m.onrender.com/api/traffic').then(r => r.json()).catch(() => null);
+  const WEATHER_CACHE_KEY = 'weather_cache';
+  const TRAFFIC_CACHE_KEY = 'traffic_cache';
+  const WEATHER_CACHE_DURATION = 5 * 60 * 1000;  // 5 minutes
+  const TRAFFIC_CACHE_DURATION = 5 * 60 * 1000;  // 5 minutes
 
-    // Add validation check before accessing forecast
+  function getCached(key, duration) {
+    try {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp < duration) return data;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function setCached(key, data) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
+    } catch (_) {}
+  }
+
+  try {
+    let weatherData = getCached(WEATHER_CACHE_KEY, WEATHER_CACHE_DURATION);
+    if (!weatherData) {
+      weatherData = await fetch('https://weather-project-237m.onrender.com/api/weather').then(r => r.json());
+      setCached(WEATHER_CACHE_KEY, weatherData);
+    }
+
+    let trafficData = getCached(TRAFFIC_CACHE_KEY, TRAFFIC_CACHE_DURATION);
+    if (!trafficData) {
+      trafficData = await fetch('https://weather-project-237m.onrender.com/api/traffic').then(r => r.json()).catch(() => null);
+      if (trafficData) setCached(TRAFFIC_CACHE_KEY, trafficData);
+    }
+
+    // Validate weather data before proceeding
     if (!weatherData.forecast?.current) throw new Error('Weather unavailable');
-    
+
     const weatherAlerts = evaluateWeatherAlerts(weatherData.forecast);
     renderWeatherAlerts(weatherAlerts);
 
-    // Pass rain flag to traffic for flood risk annotation
+    // Determine rain condition for flood risk annotation
     const rainToday = weatherData.forecast.daily.precipitation_probability_max[0] >= 70;
     const segments = trafficData ? trafficData.map(s => ({ ...s, floodRisk: rainToday && s.congestion >= 0.4 })) : null;
     renderTraffic(segments);
