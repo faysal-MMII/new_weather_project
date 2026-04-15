@@ -345,6 +345,7 @@ function showErrorState() {
 }
 
 /* ── Enhanced fetchWeather with browser caching (sessionStorage, 15 min) ── */
+// Only caches responses that contain valid forecast data (prevents stale errors)
 async function fetchWeather() {
   const CACHE_KEY = 'weather_cache';
   const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
@@ -368,11 +369,16 @@ async function fetchWeather() {
   if (!res.ok) throw new Error('Weather fetch failed');
   const data = await res.json();
 
-  // 3. Store fresh data in sessionStorage (best-effort)
-  try {
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
-  } catch (_) {
-    // Storage full or disabled; ignore
+  // 3. Only cache if the response is actually valid (has forecast.current)
+  if (data.forecast?.current) {
+    try {
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+      console.log('Cached valid weather data');
+    } catch (_) {
+      // Storage full or disabled; ignore
+    }
+  } else {
+    console.warn('Skipping cache: invalid weather data received');
   }
 
   return data;
