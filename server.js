@@ -114,16 +114,9 @@ async function generateAndSave() {
       trafficSummary = '';
     }
 
-    // Filter to only include weekdays (Monday through Friday)
-    const weekdayIndices = d.time.reduce((acc, date, i) => {
-      const day = new Date(date + 'T12:00:00').getDay();
-      // getDay(): 0 = Sunday, 1 = Monday, 5 = Friday, 6 = Saturday
-      if (day >= 1 && day <= 5) acc.push(i);
-      return acc;
-    }, []);
-
-    const forecastLines = weekdayIndices.map(i =>
-      `${d.time[i]}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
+    // Build full 7-day forecast data for context (AI needs weekend data for pattern description)
+    const fullForecastLines = d.time.map((date, i) =>
+      `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
     ).join('\n');
 
     const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write a daily forecast post in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
@@ -135,8 +128,10 @@ CURRENT CONDITIONS:
 - UV Index: ${Math.round(c.uv_index || 0)}
 ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 
-WEEKDAY FORECAST (Monday through Friday only):
-${forecastLines}
+7-DAY FORECAST DATA (use this for context only):
+${fullForecastLines}
+
+Do not write a day-by-day breakdown. Instead, describe the general weather pattern for the coming days in prose. Only reference specific days if something notable is happening — a significant rain event, a heat spike, etc. Never mention Saturday or Sunday by name. The forecast horizon is the current week only.
 
 Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers.
 
