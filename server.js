@@ -126,12 +126,16 @@ ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 7-DAY FORECAST:
 ${d.time.map((date, i) => `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`).join('\n')}
 
+Only discuss Monday through Friday in your forecast. Do not write about Saturday or Sunday even if the data includes them. Your outlook should cover the current weekday through the end of the working week.
+
 Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers.
 
-Include exactly three image placeholders in this order, placed naturally between paragraphs:
-[MAP: geography] — after the opening section, showing Abuja's location and general conditions
-[MAP: wind] — in the middle of the article, when discussing wind or atmospheric conditions
-[MAP: rainfall] — near the end, when discussing rain chances or the weekly outlook
+Include exactly three image placeholders, each on its own line with a blank line before and after it, placed naturally between sections:
+[MAP: geography] — after the opening section
+[MAP: wind] — when discussing wind or atmospheric movement
+[MAP: rainfall] — when discussing rain chances or weekly outlook
+
+Each marker must stand alone as its own paragraph. Do not write sentences that lead into or out of the marker. The paragraph before it should end cleanly. The paragraph after it should start fresh.
 
 Do not add any other [MAP:] markers. Do not place them at the very start or very end of the article.
 
