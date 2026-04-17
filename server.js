@@ -126,7 +126,16 @@ ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 7-DAY FORECAST:
 ${d.time.map((date, i) => `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`).join('\n')}
 
-Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers. Use [MAP: description] for image placeholders. No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
+Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers.
+
+Include exactly three image placeholders in this order, placed naturally between paragraphs:
+[MAP: geography] — after the opening section, showing Abuja's location and general conditions
+[MAP: wind] — in the middle of the article, when discussing wind or atmospheric conditions
+[MAP: rainfall] — near the end, when discussing rain chances or the weekly outlook
+
+Do not add any other [MAP:] markers. Do not place them at the very start or very end of the article.
+
+No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
