@@ -133,16 +133,12 @@ ${fullForecastLines}
 
 Do not write a day-by-day breakdown. Instead, describe the general weather pattern for the coming days in prose. Only reference specific days if something notable is happening — a significant rain event, a heat spike, etc. Never mention Saturday or Sunday by name. The forecast horizon is the current week only.
 
-Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Use ### for day headers.
+Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Do not use headers or section dividers of any kind — write in continuous prose only.
 
-Include exactly three image placeholders, each on its own line with a blank line before and after it, placed naturally between sections:
-[MAP: geography] — after the opening section
-[MAP: wind] — when discussing wind or atmospheric movement
-[MAP: rainfall] — when discussing rain chances or weekly outlook
-
-Each marker must stand alone as its own paragraph. Do not write sentences that lead into or out of the marker. The paragraph before it should end cleanly. The paragraph after it should start fresh.
-
-Do not add any other [MAP:] markers. Do not place them at the very start or very end of the article.
+You must include exactly these three strings, each alone on its own line with a blank line before and after, in this order:
+[MAP: geography]
+[MAP: wind]
+[MAP: rainfall]
 
 No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
