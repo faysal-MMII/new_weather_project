@@ -231,7 +231,7 @@ async function generateAndSave() {
       `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
     ).join('\n');
 
-    // 4. CONSTRUCT PROMPT
+    // 4. CONSTRUCT PROMPT (UPDATED - no marker instructions)
     const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write a daily forecast post in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
 
 CURRENT CONDITIONS:
@@ -248,10 +248,7 @@ Do not write a day-by-day breakdown. Instead, describe the general weather patte
 
 Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Do not use headers or section dividers of any kind — write in continuous prose only.
 
-You must include exactly these three strings, each alone on its own line with a blank line before and after, in this order:
-[MAP: geography]
-[MAP: wind]
-[MAP: rainfall]
+Do not include any image placeholders or markers of any kind.
 
 No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
@@ -273,11 +270,24 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
     let article = groqData.choices[0].message.content.trim();
     console.log('Article generated successfully');
 
-    // 6. BUILD SVGs AND REPLACE MARKERS
-    article = article
-      .replace('[MAP: geography]', buildGeographySVG(c))
-      .replace('[MAP: wind]', buildWindSVG(c))
-      .replace('[MAP: rainfall]', buildRainfallSVG(d));
+    // 6. INJECT SVGs AT FIXED POSITIONS (after paragraphs 2, 5, and 8)
+    // Split article into paragraphs and inject SVGs at fixed positions
+    const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
+    const withMaps = [];
+    paragraphs.forEach((p, i) => {
+      // Remove any rogue [MAP:...] markers the AI wrote (fallback cleanup)
+      const cleaned = p.replace(/\[MAP:[^\]]*\]/g, '').trim();
+      if (cleaned) withMaps.push(cleaned);
+      // Inject SVGs after specific paragraph indices
+      if (i === 1) withMaps.push('__MAP_GEOGRAPHY__');
+      if (i === 4) withMaps.push('__MAP_WIND__');
+      if (i === 7) withMaps.push('__MAP_RAINFALL__');
+    });
+    
+    article = withMaps.join('\n\n')
+      .replace('__MAP_GEOGRAPHY__', buildGeographySVG(c))
+      .replace('__MAP_WIND__', buildWindSVG(c))
+      .replace('__MAP_RAINFALL__', buildRainfallSVG(d));
 
     // 7. SAVE TO GITHUB
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
