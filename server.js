@@ -231,7 +231,7 @@ async function generateAndSave() {
       `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
     ).join('\n');
 
-    // 4. CONSTRUCT PROMPT (UPDATED - stronger restrictions)
+    // 4. CONSTRUCT PROMPT
     const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write a daily forecast post in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
 
 CURRENT CONDITIONS:
@@ -244,13 +244,9 @@ ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 7-DAY FORECAST DATA (use this for context only):
 ${fullForecastLines}
 
-This article covers Monday through Friday ONLY. Do not mention Saturday or Sunday under any circumstances. Do not write day-by-day breakdowns or use any headers. Only reference specific days if something notable is happening — a significant rain event, a heat spike, etc.
+Write a natural, flowing forecast. Use ### headers for each day (Monday, Tuesday, Wednesday, Thursday, Friday). Do not include Saturday or Sunday. Do not include any image placeholders or markers of any kind.
 
-Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Do not use headers or section dividers of any kind — write in continuous prose only.
-
-Do not include any image placeholders or markers of any kind.
-
-No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
+Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
     // 5. CALL GROQ
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -260,7 +256,7 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 2000,
         stream: false
@@ -270,9 +266,21 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
     let article = groqData.choices[0].message.content.trim();
     console.log('Article generated successfully');
 
-    // 6. CLEANUP: Strip ALL map markers, emoji lines, and ### headers
-    article = article.replace(/\[MAP:[^\]]*\]/gi, '').replace(/📡[^\n]*/g, '').trim();
-    article = article.replace(/^###.*$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
+    // 6. CLEANUP
+    
+    // Strip MAP markers and 📡 lines
+    article = article.replace(/\[MAP:[^\]]*\]/gi, '');
+    article = article.replace(/📡[^\n]*/g, '');
+    
+    // Strip Saturday and Sunday headers and their following paragraphs
+    article = article.replace(/^###\s*(Saturday|Sunday).*$/gm, '');
+    
+    // Strip any paragraph that ONLY discusses Saturday or Sunday
+    // (keeps paragraphs that mention weekdays even if Saturday appears)
+    article = article.replace(/^(?!.*\b(Monday|Tuesday|Wednesday|Thursday|Friday)\b).*\b(Saturday|Sunday)\b.*$/gm, '');
+    
+    // Collapse excess blank lines
+    article = article.replace(/\n{3,}/g, '\n\n').trim();
 
     // 7. INJECT SVGs AT FIXED POSITIONS (after paragraphs 2, 5, and 8)
     const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
