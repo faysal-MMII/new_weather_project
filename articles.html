@@ -317,20 +317,9 @@ function parseArticle(raw) {
       continue;
     }
 
-    if (trimmed.includes('[MAP:')) {
-      const parts = trimmed.split(/(\[MAP:[^\]]+\])/);
-      for (const part of parts) {
-        if (part.startsWith('[MAP:')) {
-          flushPara();
-          const desc = part.replace(/^\[MAP:\s*/i, '').replace(/\]$/, '').trim();
-          bodyHTML += `<div class="map-placeholder">📡 ${desc}</div>`;
-        } else if (part.trim()) {
-          currentPara += (currentPara ? ' ' : '') + part.trim();
-        }
-      }
-    } else {
-      currentPara += (currentPara ? ' ' : '') + trimmed;
-    }
+    // REMOVED: [MAP:] handler block — server now handles all map/SVG injection
+    // All text lines are now treated as regular paragraph content
+    currentPara += (currentPara ? ' ' : '') + trimmed;
   }
   flushPara();
 

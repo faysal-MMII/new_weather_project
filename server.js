@@ -275,8 +275,8 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
     const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
     const withMaps = [];
     paragraphs.forEach((p, i) => {
-      // Remove any rogue [MAP:...] markers the AI wrote (fallback cleanup)
-      const cleaned = p.replace(/\[MAP:[^\]]*\]/g, '').trim();
+      // AGGRESSIVE CLEANUP: Remove any [MAP:...] markers AND any 📡 emoji lines the AI wrote
+      const cleaned = p.replace(/\[MAP:[^\]]*\]/gi, '').replace(/📡[^\n]*/g, '').trim();
       if (cleaned) withMaps.push(cleaned);
       // Inject SVGs after specific paragraph indices
       if (i === 1) withMaps.push('__MAP_GEOGRAPHY__');
