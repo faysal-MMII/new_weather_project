@@ -260,7 +260,7 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 2000,
         stream: false
