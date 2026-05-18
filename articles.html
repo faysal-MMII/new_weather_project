@@ -317,8 +317,7 @@ function parseArticle(raw) {
       continue;
     }
 
-    // REMOVED: [MAP:] handler block — server now handles all map/SVG injection
-    // All text lines are now treated as regular paragraph content
+    // All text lines are treated as regular paragraph content
     currentPara += (currentPara ? ' ' : '') + trimmed;
   }
   flushPara();
@@ -443,12 +442,18 @@ CURRENT: ${Math.round(c.temperature_2m)}°C, feels like ${Math.round(c.apparent_
 7-DAY FORECAST:
 ${dayLines}
 
-INSTRUCTIONS: Start with "In brief:" summary sentence. Write 8-12 paragraphs, 600-900 words. Use ### for day headers. Insert [MAP: description] placeholders 1-2 times. Reference Abuja landmarks naturally. No em-dashes. No AI clichés. Output article text only.`;
+INSTRUCTIONS: Start with "In brief:" summary sentence. Write 8-12 paragraphs, 600-900 words. Use ### for day headers for each day. Do not include any image placeholders or markers of any kind. Do not mention Saturday or Sunday. Reference Abuja landmarks naturally. No em-dashes. No AI clichés. Output article text only.`;
 
     const res = await fetch(`${RENDER_URL}/api/forecast`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ 
+        prompt,
+        weatherData: {
+          current: c,
+          daily: d
+        }
+      })
     });
     const data = await res.json();
     return data.text;

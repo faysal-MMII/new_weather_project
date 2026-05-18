@@ -248,58 +248,25 @@ Write a natural, flowing forecast. Use ### headers for each day (Monday, Tuesday
 
 Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
-    // 5. CALL GROQ
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // 5. CALL GROQ WITH WEATHER DATA
+    const groqRes = await fetch('http://localhost:3000/api/forecast', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 2000,
-        stream: false
+        prompt: prompt,
+        weatherData: {
+          current: c,
+          daily: d
+        }
       })
     });
     const groqData = await groqRes.json();
-    let article = groqData.choices[0].message.content.trim();
-    console.log('Article generated successfully');
+    let article = groqData.text;
+    console.log('Article generated and processed successfully');
 
-    // 6. CLEANUP
-    
-    // Strip MAP markers and 📡 lines
-    article = article.replace(/\[MAP:[^\]]*\]/gi, '');
-    article = article.replace(/📡[^\n]*/g, '');
-    
-    // Strip Saturday and Sunday headers and their following paragraphs
-    article = article.replace(/^###\s*(Saturday|Sunday).*$/gm, '');
-    
-    // Strip any paragraph that ONLY discusses Saturday or Sunday
-    // (keeps paragraphs that mention weekdays even if Saturday appears)
-    article = article.replace(/^(?!.*\b(Monday|Tuesday|Wednesday|Thursday|Friday)\b).*\b(Saturday|Sunday)\b.*$/gm, '');
-    
-    // Collapse excess blank lines
-    article = article.replace(/\n{3,}/g, '\n\n').trim();
-
-    // 7. INJECT SVGs AT FIXED POSITIONS (after paragraphs 2, 5, and 8)
-    const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
-    const withMaps = [];
-    paragraphs.forEach((p, i) => {
-      const cleaned = p.trim();
-      if (cleaned) withMaps.push(cleaned);
-      // Inject SVGs after specific paragraph indices
-      if (i === 1) withMaps.push('__MAP_GEOGRAPHY__');
-      if (i === 4) withMaps.push('__MAP_WIND__');
-      if (i === 7) withMaps.push('__MAP_RAINFALL__');
-    });
-    
-    article = withMaps.join('\n\n')
-      .replace('__MAP_GEOGRAPHY__', buildGeographySVG(c))
-      .replace('__MAP_WIND__', buildWindSVG(c))
-      .replace('__MAP_RAINFALL__', buildRainfallSVG(d));
-
-    // 8. SAVE TO GITHUB
+    // 6. SAVE TO GITHUB
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
     await saveArticleToGitHub(article, dateStr);
     console.log('GitHub save completed');
@@ -308,6 +275,61 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Refere
     console.error('Generation failed:', err.message);
   }
 }
+
+// Updated /api/forecast endpoint with post-processing and SVG injection
+app.post('/api/forecast', async (req, res) => {
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: req.body.prompt }],
+        max_tokens: 2000,
+        stream: false
+      })
+    });
+    const data = await response.json();
+    let article = data.choices[0].message.content?.trim() || '';
+
+    // Strip map markers and 📡 lines
+    article = article.replace(/\[MAP:[^\]]*\]/gi, '');
+    article = article.replace(/📡[^\n]*/g, '');
+
+    // Strip Saturday and Sunday headers
+    article = article.replace(/^###\s*(Saturday|Sunday).*$/gm, '');
+
+    // Strip paragraphs that only discuss weekends
+    article = article.replace(/^(?!.*\b(Monday|Tuesday|Wednesday|Thursday|Friday)\b).*\b(Saturday|Sunday)\b.*$/gm, '');
+
+    // Collapse excess blank lines
+    article = article.replace(/\n{3,}/g, '\n\n').trim();
+
+    // Inject SVGs at fixed positions using weather data from the request
+    const weatherData = req.body.weatherData;
+    if (weatherData) {
+      const c = weatherData.current;
+      const d = weatherData.daily;
+      const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
+      const withMaps = [];
+      paragraphs.forEach((p, i) => {
+        withMaps.push(p);
+        if (i === 1) withMaps.push(buildGeographySVG(c));
+        if (i === 4) withMaps.push(buildWindSVG(c));
+        if (i === 7) withMaps.push(buildRainfallSVG(d));
+      });
+      article = withMaps.join('\n\n');
+    }
+
+    res.json({ text: article });
+  } catch (err) {
+    console.error('Error:', err.message, err.stack);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Traffic endpoint with fallback and resilience
 app.get('/api/traffic', async (req, res) => {
@@ -400,31 +422,6 @@ app.get('/api/traffic', async (req, res) => {
 app.get('/api/generate', async (req, res) => {
   await generateAndSave();
   res.json({ ok: true });
-});
-
-app.post('/api/forecast', async (req, res) => {
-  try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: req.body.prompt }],
-        max_tokens: 2000,
-        stream: false
-      })
-    });
-
-    const data = await response.json();
-    console.log('Groq response:', JSON.stringify(data));
-    res.json({ text: data.choices[0].message.content?.trim() || '' });
-  } catch (err) {
-    console.error('Error:', err.message, err.stack);
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // /api/weather endpoint with 30-minute cache and error guard
