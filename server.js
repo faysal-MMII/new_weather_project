@@ -231,7 +231,7 @@ async function generateAndSave() {
       `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
     ).join('\n');
 
-    // 4. CONSTRUCT PROMPT (UPDATED - no marker instructions)
+    // 4. CONSTRUCT PROMPT (UPDATED - stronger restrictions)
     const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write a daily forecast post in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
 
 CURRENT CONDITIONS:
@@ -244,7 +244,7 @@ ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 7-DAY FORECAST DATA (use this for context only):
 ${fullForecastLines}
 
-Do not write a day-by-day breakdown. Instead, describe the general weather pattern for the coming days in prose. Only reference specific days if something notable is happening — a significant rain event, a heat spike, etc. Never mention Saturday or Sunday by name. The forecast horizon is the current week only.
+This article covers Monday through Friday ONLY. Do not mention Saturday or Sunday under any circumstances. Do not write day-by-day breakdowns or use any headers. Only reference specific days if something notable is happening — a significant rain event, a heat spike, etc.
 
 Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Do not use headers or section dividers of any kind — write in continuous prose only.
 
@@ -270,13 +270,15 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
     let article = groqData.choices[0].message.content.trim();
     console.log('Article generated successfully');
 
-    // 6. INJECT SVGs AT FIXED POSITIONS (after paragraphs 2, 5, and 8)
-    // Split article into paragraphs and inject SVGs at fixed positions
+    // 6. CLEANUP: Strip ALL map markers, emoji lines, and ### headers
+    article = article.replace(/\[MAP:[^\]]*\]/gi, '').replace(/📡[^\n]*/g, '').trim();
+    article = article.replace(/^###.*$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
+
+    // 7. INJECT SVGs AT FIXED POSITIONS (after paragraphs 2, 5, and 8)
     const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
     const withMaps = [];
     paragraphs.forEach((p, i) => {
-      // AGGRESSIVE CLEANUP: Remove any [MAP:...] markers AND any 📡 emoji lines the AI wrote
-      const cleaned = p.replace(/\[MAP:[^\]]*\]/gi, '').replace(/📡[^\n]*/g, '').trim();
+      const cleaned = p.trim();
       if (cleaned) withMaps.push(cleaned);
       // Inject SVGs after specific paragraph indices
       if (i === 1) withMaps.push('__MAP_GEOGRAPHY__');
@@ -289,7 +291,7 @@ No bullet points. Reference Abuja landmarks naturally.${trafficSummary ? ' Menti
       .replace('__MAP_WIND__', buildWindSVG(c))
       .replace('__MAP_RAINFALL__', buildRainfallSVG(d));
 
-    // 7. SAVE TO GITHUB
+    // 8. SAVE TO GITHUB
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
     await saveArticleToGitHub(article, dateStr);
     console.log('GitHub save completed');
