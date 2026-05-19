@@ -299,8 +299,6 @@ app.post('/api/forecast', async (req, res) => {
     article = article.replace(/\[MAP:[^\]]*\]/gi, '');
     article = article.replace(/📡[^\n]*/g, '');
 
-    // Strip Saturday and Sunday headers
-    article = article.replace(/^###\s*(Saturday|Sunday).*$/gm, '');
 
     // Strip paragraphs that only discuss weekends
     article = article.replace(/^(?!.*\b(Monday|Tuesday|Wednesday|Thursday|Friday)\b).*\b(Saturday|Sunday)\b.*$/gm, '');

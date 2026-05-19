@@ -307,18 +307,26 @@ function parseArticle(raw) {
     }
   }
 
-  for (const line of bodyLines) {
-    const trimmed = line.trim();
-    if (!trimmed) { flushPara(); continue; }
-
+  // Split on double newlines to preserve SVG blocks
+  const chunks = bodyLines.join('\n').split(/\n\n+/);
+  for (const chunk of chunks) {
+    const trimmed = chunk.trim();
+    if (!trimmed) continue;
+    
+    if (trimmed.startsWith('<div class="article-map">')) {
+      flushPara();
+      bodyHTML += trimmed;
+      continue;
+    }
+    
     if (trimmed.startsWith('###')) {
       flushPara();
       bodyHTML += `<h3>${trimmed.replace(/^###\s*/, '')}</h3>`;
       continue;
     }
-
-    // All text lines are treated as regular paragraph content
-    currentPara += (currentPara ? ' ' : '') + trimmed;
+    
+    flushPara();
+    currentPara = trimmed.replace(/\n/g, ' ');
   }
   flushPara();
 
