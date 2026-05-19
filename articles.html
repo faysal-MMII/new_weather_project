@@ -103,18 +103,6 @@ tailwind.config = {
   color: #dfe3e9;
   margin-bottom: 1rem;
 }
-.article-body .map-placeholder {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 1rem;
-  padding: 2rem 1rem;
-  text-align: center;
-  margin: 1.5rem 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.75rem;
-  color: #849396;
-  font-style: italic;
-}
 
 /* SVG map styling */
 .article-map {
@@ -284,6 +272,9 @@ function setCached(key, data) {
 }
 
 function parseArticle(raw) {
+  // Strip SVG blocks before any processing
+  raw = raw.replace(/<div class="article-map">[\s\S]*?<\/svg><\/div>/g, '');
+  
   const lines = raw.split('\n');
   let briefLine = '';
   let bodyLines = [];
@@ -334,6 +325,9 @@ function parseArticle(raw) {
 }
 
 function extractHeadline(raw) {
+  // Strip SVG blocks before extraction
+  raw = raw.replace(/<div class="article-map">[\s\S]*?<\/svg><\/div>/g, '');
+  
   const afterBrief = raw.replace(/^.*in brief:.*\n/i, '').trim();
   const firstSentence = afterBrief.split(/[.!?]/)[0].trim();
   if (firstSentence && firstSentence.length > 20 && firstSentence.length < 120) {

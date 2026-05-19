@@ -17,19 +17,46 @@ let trafficCacheTime = 0;
 const TRAFFIC_CACHE_DURATION = 15 * 60 * 1000;
 
 // Key Abuja road corridors with TomTom coordinates
-// Using only coordinates confirmed to work with TomTom's flow data API
-// TomTom coverage in Abuja is limited to major expressways and arterial roads
 const ABUJA_CORRIDORS = [
-  { name: 'Nnamdi Azikiwe Expressway', point: '9.0579,7.4891' },      // ✅ Confirmed working
-  { name: 'Airport Road', point: '9.0079,7.4310' },                    // Airport/Lugbe area
-  { name: 'Kubwa Expressway', point: '9.1200,7.3500' },                // Kubwa axis
-  { name: 'Abuja-Keffi Road', point: '9.0900,7.5200' },                // Keffi/Mararaba
-  { name: 'Herbert Macaulay Way', point: '9.0747,7.4760' },            // Wuse Central
+  { name: 'Nnamdi Azikiwe Expressway', point: '9.0579,7.4891' },
+  { name: 'Airport Road', point: '9.0079,7.4310' },
+  { name: 'Kubwa Expressway', point: '9.1200,7.3500' },
+  { name: 'Abuja-Keffi Road', point: '9.0900,7.5200' },
+  { name: 'Herbert Macaulay Way', point: '9.0747,7.4760' },
 ];
 
-// Fallback single-corridor mode for when API limits or errors occur
-// This ensures alerts.html still shows some traffic data even if multi-fetch fails
 let lastWorkingSegment = null;
+
+// Holiday detection for Abuja/Nigeria
+function getTodayHoliday() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const md = `${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  
+  // Fixed date holidays
+  const fixedHolidays = {
+    '01-01': 'New Year\'s Day',
+    '05-01': 'Workers\' Day',
+    '10-01': 'Independence Day',
+    '12-25': 'Christmas Day',
+    '12-26': 'Boxing Day'
+  };
+  
+  if (fixedHolidays[md]) return fixedHolidays[md];
+  
+  // Islamic holidays (2025-2026 approximate dates - update annually)
+  const islamicHolidays = {
+    '2025-03-30': 'Eid al-Fitr (end of Ramadan)',
+    '2025-06-06': 'Eid al-Adha (Feast of Sacrifice)',
+    '2026-03-19': 'Eid al-Fitr (end of Ramadan)',
+    '2026-05-27': 'Eid al-Adha (Feast of Sacrifice)'
+  };
+  
+  const dateStr = `${year}-${md}`;
+  if (islamicHolidays[dateStr]) return islamicHolidays[dateStr];
+  
+  return null;
+}
 
 async function saveArticleToGitHub(article, dateStr) {
   const filename = `articles/${dateStr}.json`;
@@ -88,9 +115,7 @@ function buildGeographySVG(c) {
       <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
     </marker>
   </defs>
-  <!-- FCT boundary outline (simplified polygon) -->
   <polygon points="120,60 200,40 310,50 390,80 420,150 400,240 340,280 220,290 140,260 90,190 80,130" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="6 3"/>
-  <!-- Districts -->
   <circle cx="230" cy="155" r="28" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
   <text x="230" y="150" text-anchor="middle" fill="#93c5fd" font-size="11" font-family="Inter,sans-serif" font-weight="600">Maitama</text>
   <circle cx="290" cy="190" r="22" fill="#1a3a2a" stroke="#22c55e" stroke-width="1"/>
@@ -99,18 +124,14 @@ function buildGeographySVG(c) {
   <text x="175" y="189" text-anchor="middle" fill="#d8b4fe" font-size="10" font-family="Inter,sans-serif">Wuse</text>
   <circle cx="260" cy="115" r="18" fill="#1a2a3a" stroke="#38bdf8" stroke-width="1"/>
   <text x="260" y="119" text-anchor="middle" fill="#7dd3fc" font-size="10" font-family="Inter,sans-serif">Gwarinpa</text>
-  <!-- Aso Rock marker -->
   <polygon points="320,155 330,135 340,155" fill="#475569" stroke="#94a3b8" stroke-width="1"/>
   <text x="342" y="148" fill="#94a3b8" font-size="9" font-family="Inter,sans-serif">Aso Rock</text>
-  <!-- City center dot -->
   <circle cx="255" cy="160" r="5" fill="#f59e0b"/>
   <circle cx="255" cy="160" r="9" fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.5"/>
-  <!-- Conditions badge -->
   <rect x="20" y="20" width="120" height="52" rx="8" fill="#1e293b" stroke="#334155" stroke-width="0.5"/>
   <text x="80" y="38" text-anchor="middle" fill="#f1f5f9" font-size="11" font-family="Inter,sans-serif" font-weight="600">Abuja</text>
   <text x="80" y="54" text-anchor="middle" fill="#f59e0b" font-size="16" font-family="Inter,sans-serif" font-weight="700">${temp}°C</text>
   <text x="80" y="66" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Inter,sans-serif">Humidity ${humidity}%</text>
-  <!-- Label -->
   <text x="260" y="308" text-anchor="middle" fill="#475569" font-size="10" font-family="Inter,sans-serif">FCT — Federal Capital Territory</text>
 </svg></div>`;
 }
@@ -128,29 +149,23 @@ function buildWindSVG(c) {
     dir < 202.5 ? 'Southerly' : dir < 247.5 ? 'SW' : dir < 292.5 ? 'Westerly' : 'NW';
   return `<div class="article-map">
 <svg viewBox="0 0 400 300" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;max-width:600px;margin:1.5rem auto;border-radius:16px;background:#0f1923;">
-  <!-- Compass rings -->
   <circle cx="${cx}" cy="${cy}" r="100" fill="none" stroke="#1e293b" stroke-width="1"/>
   <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e293b" stroke-width="0.5" stroke-dasharray="4 4"/>
   <circle cx="${cx}" cy="${cy}" r="40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
-  <!-- Cardinal tick marks -->
   <line x1="${cx}" y1="${cy-100}" x2="${cx}" y2="${cy-88}" stroke="#334155" stroke-width="1.5"/>
   <line x1="${cx}" y1="${cy+88}" x2="${cx}" y2="${cy+100}" stroke="#334155" stroke-width="1.5"/>
   <line x1="${cx-100}" y1="${cy}" x2="${cx-88}" y2="${cy}" stroke="#334155" stroke-width="1.5"/>
   <line x1="${cx+88}" y1="${cy}" x2="${cx+100}" y2="${cy}" stroke="#334155" stroke-width="1.5"/>
-  <!-- Cardinal labels -->
   <text x="${cx}" y="${cy-108}" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="Inter,sans-serif" font-weight="600">N</text>
   <text x="${cx}" y="${cy+118}" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="Inter,sans-serif" font-weight="600">S</text>
   <text x="${cx-112}" y="${cy+4}" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="Inter,sans-serif" font-weight="600">W</text>
   <text x="${cx+112}" y="${cy+4}" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="Inter,sans-serif" font-weight="600">E</text>
-  <!-- Wind arrow -->
   <line x1="${cx}" y1="${cy}" x2="${ax}" y2="${ay}" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" marker-end="url(#arr)"/>
   <circle cx="${cx}" cy="${cy}" r="5" fill="#38bdf8"/>
-  <!-- Info panel -->
   <rect x="260" y="60" width="120" height="80" rx="8" fill="#1e293b" stroke="#334155" stroke-width="0.5"/>
   <text x="320" y="82" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">Wind speed</text>
   <text x="320" y="104" text-anchor="middle" fill="#38bdf8" font-size="22" font-family="Inter,sans-serif" font-weight="700">${speed}</text>
   <text x="320" y="120" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="Inter,sans-serif">km/h · ${description}</text>
-  <!-- Label -->
   <text x="200" y="285" text-anchor="middle" fill="#475569" font-size="10" font-family="Inter,sans-serif">Wind direction and speed — Abuja</text>
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -179,13 +194,11 @@ function buildRainfallSVG(d) {
   }).join('\n');
   return `<div class="article-map">
 <svg viewBox="0 0 520 280" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;max-width:600px;margin:1.5rem auto;border-radius:16px;background:#0f1923;">
-  <!-- Grid lines -->
   <line x1="50" y1="60" x2="490" y2="60" stroke="#1e293b" stroke-width="0.5"/>
   <line x1="50" y1="100" x2="490" y2="100" stroke="#1e293b" stroke-width="0.5"/>
   <line x1="50" y1="140" x2="490" y2="140" stroke="#1e293b" stroke-width="0.5"/>
   <line x1="50" y1="180" x2="490" y2="180" stroke="#1e293b" stroke-width="0.5"/>
   <line x1="50" y1="220" x2="490" y2="220" stroke="#334155" stroke-width="1"/>
-  <!-- Y axis labels -->
   <text x="44" y="64" text-anchor="end" fill="#475569" font-size="9" font-family="Inter,sans-serif">100%</text>
   <text x="44" y="104" text-anchor="end" fill="#475569" font-size="9" font-family="Inter,sans-serif">75%</text>
   <text x="44" y="144" text-anchor="end" fill="#475569" font-size="9" font-family="Inter,sans-serif">50%</text>
@@ -226,13 +239,25 @@ async function generateAndSave() {
       }
     } catch (_) { trafficSummary = ''; }
 
-    // 3. BUILD FORECAST LINES
+    // 3. CHECK FOR HOLIDAYS
+    const holiday = getTodayHoliday();
+    const holidayNote = holiday ? `\n\nNote: Today is ${holiday}. Mention this naturally in the opening paragraph if relevant to people's plans.` : '';
+
+    // 4. BUILD FORECAST LINES
     const fullForecastLines = d.time.map((date, i) =>
       `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
     ).join('\n');
 
-    // 4. CONSTRUCT PROMPT
-    const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write a daily forecast post in the style of Space City Weather: conversational, honest, hype-free, expert but never condescending.
+    // 5. CONSTRUCT PROMPT (stronger, with holiday awareness)
+    const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write like a real meteorologist talking to neighbors — warm, conversational, knowledgeable, never condescending.
+
+CRITICAL RULES:
+- NEVER repeat phrases like "be sure to", "don't forget to", "it's worth noting"
+- NEVER use the same sentence structure twice in a row
+- Assume readers are intelligent adults who don't need obvious advice
+- Write tight, opinionated prose with personality
+- Use contractions (it's, don't, we're)
+- Add humor and voice where appropriate
 
 CURRENT CONDITIONS:
 - Temperature: ${Math.round(c.temperature_2m)}°C (feels like ${Math.round(c.apparent_temperature)}°C)
@@ -243,12 +268,13 @@ ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 
 7-DAY FORECAST DATA (use this for context only):
 ${fullForecastLines}
+${holidayNote}
 
 Write a natural, flowing forecast. Use ### headers for each day (Monday, Tuesday, Wednesday, Thursday, Friday). Do not include Saturday or Sunday. Do not include any image placeholders or markers of any kind.
 
-Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Reference Abuja landmarks naturally.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
+Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Reference Abuja landmarks naturally. Be conversational — like you're explaining weather to a friend over coffee.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
-    // 5. CALL GROQ WITH WEATHER DATA
+    // 6. CALL GROQ WITH WEATHER DATA
     const groqRes = await fetch('http://localhost:3000/api/forecast', {
       method: 'POST',
       headers: {
@@ -266,7 +292,7 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Refere
     let article = groqData.text;
     console.log('Article generated and processed successfully');
 
-    // 6. SAVE TO GITHUB
+    // 7. SAVE TO GITHUB
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
     await saveArticleToGitHub(article, dateStr);
     console.log('GitHub save completed');
@@ -341,7 +367,6 @@ app.get('/api/traffic', async (req, res) => {
       return res.status(500).json({ error: 'TomTom API key not configured' });
     }
 
-    // Fetch flow data for each corridor in parallel
     const results = await Promise.all(
       ABUJA_CORRIDORS.map(async (corridor) => {
         try {
@@ -353,7 +378,6 @@ app.get('/api/traffic', async (req, res) => {
           }
           const data = await r.json();
           
-          // Check if we got valid flow data
           if (!data.flowSegmentData) {
             console.warn(`No flowSegmentData for ${corridor.name}`);
             return null;
@@ -370,7 +394,6 @@ app.get('/api/traffic', async (req, res) => {
           
           const congestion = freeFlowSpeed > 0 ? Math.max(0, 1 - (currentSpeed / freeFlowSpeed)) : 0;
 
-          // Store the first working segment as fallback
           if (!lastWorkingSegment && currentSpeed) {
             lastWorkingSegment = {
               name: corridor.name,
@@ -395,7 +418,6 @@ app.get('/api/traffic', async (req, res) => {
 
     let filtered = results.filter(Boolean);
     
-    // If no segments returned but we have a working fallback, use it
     if (filtered.length === 0 && lastWorkingSegment) {
       console.log('Using last working segment as fallback');
       filtered = [lastWorkingSegment];
@@ -407,7 +429,6 @@ app.get('/api/traffic', async (req, res) => {
     res.json(filtered);
   } catch (err) {
     console.error('Traffic endpoint error:', err.message);
-    // Return last working segment if available instead of failing completely
     if (lastWorkingSegment) {
       return res.json([lastWorkingSegment]);
     }
@@ -415,13 +436,13 @@ app.get('/api/traffic', async (req, res) => {
   }
 });
 
-// Manual trigger endpoint — for testing and cron-job.org
+// Manual trigger endpoint
 app.get('/api/generate', async (req, res) => {
   await generateAndSave();
   res.json({ ok: true });
 });
 
-// /api/weather endpoint with 30-minute cache and error guard
+// /api/weather endpoint with 30-minute cache
 app.get('/api/weather', async (req, res) => {
   try {
     const now = Date.now();
@@ -430,7 +451,6 @@ app.get('/api/weather', async (req, res) => {
     }
 
     const LAT = 9.0765, LON = 7.3986;
-
     const today = new Date();
     const past = new Date(today);
     past.setDate(today.getDate() - 7);
@@ -452,7 +472,6 @@ app.get('/api/weather', async (req, res) => {
       ).then(r => r.json())
     ]);
 
-    // Guard: Check for errors before caching
     if (forecast.error || historical.error) {
       console.error('Weather API returned error:', { forecastError: forecast.error, historicalError: historical.error });
       return res.status(503).json({ error: 'Weather data temporarily unavailable' });
