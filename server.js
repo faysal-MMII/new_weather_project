@@ -272,7 +272,7 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Refere
     console.log('GitHub save completed');
 
   } catch (err) {
-    console.error('Generation failed:', err.message);
+    console.error('Generation failed:', err.message, err.cause || '');
   }
 }
 
@@ -298,7 +298,6 @@ app.post('/api/forecast', async (req, res) => {
     // Strip map markers and 📡 lines
     article = article.replace(/\[MAP:[^\]]*\]/gi, '');
     article = article.replace(/📡[^\n]*/g, '');
-
 
     // Strip paragraphs that only discuss weekends
     article = article.replace(/^(?!.*\b(Monday|Tuesday|Wednesday|Thursday|Friday)\b).*\b(Saturday|Sunday)\b.*$/gm, '');
