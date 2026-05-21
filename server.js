@@ -249,30 +249,32 @@ async function generateAndSave() {
     ).join('\n');
 
     // 5. CONSTRUCT PROMPT
-    const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write like a real meteorologist talking to neighbors — warm, conversational, knowledgeable, never condescending.
+    const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write in the style of a professional meteorologist writing for an educated local audience. Be direct, specific, and confident.
 
-CRITICAL RULES:
-- NEVER repeat phrases like "be sure to", "don't forget to", "it's worth noting"
-- NEVER use the same sentence structure twice in a row
-- Assume readers are intelligent adults who don't need obvious advice
-- Write tight, opinionated prose with personality
-- Use contractions (it's, don't, we're)
-- Add humor and voice where appropriate
-
-CURRENT CONDITIONS:
+CURRENT CONDITIONS RIGHT NOW:
 - Temperature: ${Math.round(c.temperature_2m)}°C (feels like ${Math.round(c.apparent_temperature)}°C)
 - Humidity: ${c.relative_humidity_2m}%
 - Wind: ${Math.round(c.wind_speed_10m)} km/h
 - UV Index: ${Math.round(c.uv_index || 0)}
 ${trafficSummary ? `- Traffic: ${trafficSummary}` : ''}
 
-7-DAY FORECAST DATA (use this for context only):
+7-DAY FORECAST:
 ${fullForecastLines}
 ${holidayNote}
 
-Write a natural, flowing forecast. Use ### headers for each day (Monday, Tuesday, Wednesday, Thursday, Friday). Do not include Saturday or Sunday. Do not include any image placeholders or markers of any kind.
+WRITING INSTRUCTIONS:
+1. Start with exactly one "In brief:" sentence summarising the week.
+2. Write the full article after the In brief line.
+3. Use ### for day headers (Monday through Friday only — never Saturday or Sunday). After a day header, do NOT begin the paragraph with the day name again. Go straight into the weather detail.
+4. Under each day header, write 2–4 substantial paragraphs covering that day's weather in specific detail — temperatures, rain timing, wind shifts, humidity, what it will feel like in different parts of the city.
+5. Write 8–12 paragraphs total, minimum 600 words. No bullet points. Pure prose.
+6. Voice: sound like a professional meteorologist writing for an educated local audience. Be direct, specific, and confident. Reference actual weather mechanisms — low-pressure systems, wind direction shifts, rainfall accumulation ranges, humidity trends. No rhetorical questions. No "a girl can dream." No "let's not complain." No addressing the reader as "you" repeatedly.
+7. Reference Abuja landmarks naturally where they fit: Maitama, Garki, Wuse, Gwarinpa, Aso Rock, NASS, the airport road, low-lying flood-prone areas.
+8. Be honest about uncertainty — "my best guess is...", "models suggest...", "there's a chance..." — but always anchor it in data.
+9. End with one practical takeaway for residents.
+10. Never use em-dashes. Never say "it's worth noting", "it's important to remember", "be sure to", "make sure you". No AI clichés. No repeated sentence structures.
 
-Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Reference Abuja landmarks naturally. Be conversational — like you're explaining weather to a friend over coffee.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
+Output only the article text. No title, no byline, no extra commentary.`;
 
     // 6. CALL GROQ DIRECTLY
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
