@@ -248,7 +248,7 @@ async function generateAndSave() {
       `${date}: High ${Math.round(d.temperature_2m_max[i])}°C / Low ${Math.round(d.temperature_2m_min[i])}°C, ${d.precipitation_probability_max[i]}% rain chance`
     ).join('\n');
 
-    // 5. CONSTRUCT PROMPT (stronger, with holiday awareness)
+    // 5. CONSTRUCT PROMPT
     const prompt = `You are the voice of a trusted local weather blog covering Abuja, Nigeria. Write like a real meteorologist talking to neighbors — warm, conversational, knowledgeable, never condescending.
 
 CRITICAL RULES:
@@ -274,23 +274,39 @@ Write a natural, flowing forecast. Use ### headers for each day (Monday, Tuesday
 
 Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Reference Abuja landmarks naturally. Be conversational — like you're explaining weather to a friend over coffee.${trafficSummary ? ' Mention road conditions naturally if weather may affect travel.' : ''}`;
 
-    // 6. CALL GROQ WITH WEATHER DATA
-    const groqRes = await fetch('http://localhost:3000/api/forecast', {
+    // 6. CALL GROQ DIRECTLY
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        prompt: prompt,
-        weatherData: {
-          current: c,
-          daily: d
-        }
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 2000,
+        stream: false
       })
     });
     const groqData = await groqRes.json();
-    let article = groqData.text;
-    console.log('Article generated and processed successfully');
+    let article = groqData.choices[0].message.content?.trim() || '';
+    console.log('Article generated successfully');
+
+    // Strip any map markers or emoji the model writes
+    article = article.replace(/\[MAP:[^\]]*\]/gi, '');
+    article = article.replace(/📡[^\n]*/g, '');
+    article = article.replace(/\n{3,}/g, '\n\n').trim();
+
+    // Inject SVGs at fixed positions
+    const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
+    const withMaps = [];
+    paragraphs.forEach((p, i) => {
+      withMaps.push(p);
+      if (i === 1) withMaps.push(buildGeographySVG(c));
+      if (i === 4) withMaps.push(buildWindSVG(c));
+      if (i === 7) withMaps.push(buildRainfallSVG(d));
+    });
+    article = withMaps.join('\n\n');
 
     // 7. SAVE TO GITHUB
     const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
@@ -304,7 +320,7 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Refere
   }
 }
 
-// Updated /api/forecast endpoint with post-processing and SVG injection
+// Updated /api/forecast endpoint for frontend Regenerate
 app.post('/api/forecast', async (req, res) => {
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
