@@ -272,21 +272,17 @@ function setCached(key, data) {
 }
 
 function parseArticle(raw) {
-  // Strip SVG blocks before any processing
-  raw = raw.replace(/<div class="article-map">[\s\S]*?<\/svg><\/div>/g, '');
-  
-  const lines = raw.split('\n');
   let briefLine = '';
-  let bodyLines = [];
+  let bodyText = raw;
 
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim().toLowerCase().startsWith('in brief:')) {
-      briefLine = lines[i].trim().replace(/^in brief:\s*/i, '');
-      bodyLines = lines.slice(i + 1);
-      break;
-    }
+  // Find and extract the "In brief:" line from raw text directly
+  const briefMatch = raw.match(/^in brief:\s*(.+)$/im);
+  if (briefMatch) {
+    briefLine = briefMatch[1].trim();
+    // Cut body to everything after the In brief line
+    const briefPos = raw.indexOf(briefMatch[0]);
+    bodyText = raw.slice(briefPos + briefMatch[0].length).trim();
   }
-  if (!briefLine) bodyLines = lines;
 
   let bodyHTML = '';
   let currentPara = '';
@@ -298,24 +294,23 @@ function parseArticle(raw) {
     }
   }
 
-  // Split on double newlines to preserve SVG blocks
-  const chunks = bodyLines.join('\n').split(/\n\n+/);
+  const chunks = bodyText.split(/\n\n+/);
   for (const chunk of chunks) {
     const trimmed = chunk.trim();
     if (!trimmed) continue;
-    
+
     if (trimmed.startsWith('<div class="article-map">')) {
       flushPara();
       bodyHTML += trimmed;
       continue;
     }
-    
+
     if (trimmed.startsWith('###')) {
       flushPara();
       bodyHTML += `<h3>${trimmed.replace(/^###\s*/, '')}</h3>`;
       continue;
     }
-    
+
     flushPara();
     currentPara = trimmed.replace(/\n/g, ' ');
   }
@@ -325,10 +320,8 @@ function parseArticle(raw) {
 }
 
 function extractHeadline(raw) {
-  // Strip SVG blocks before extraction
-  raw = raw.replace(/<div class="article-map">[\s\S]*?<\/svg><\/div>/g, '');
-  
-  const afterBrief = raw.replace(/^.*in brief:.*\n/i, '').trim();
+  const cleaned = raw.replace(/<div class="article-map">[\s\S]*?<\/svg><\/div>/g, '');
+  const afterBrief = cleaned.replace(/^.*in brief:.*\n/i, '').trim();
   const firstSentence = afterBrief.split(/[.!?]/)[0].trim();
   if (firstSentence && firstSentence.length > 20 && firstSentence.length < 120) {
     return firstSentence;
