@@ -298,7 +298,9 @@ Write 8-12 paragraphs, minimum 600 words. Start with "In brief:" summary. Refere
     console.log('GitHub save completed');
 
   } catch (err) {
-    console.error('Generation failed:', err.message, err.cause || '');
+    console.error('Generation failed:', err.message);
+    console.error('Error cause:', err.cause);
+    console.error('Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
   }
 }
 
