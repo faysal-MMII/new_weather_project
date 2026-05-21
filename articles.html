@@ -307,7 +307,13 @@ function parseArticle(raw) {
 
     if (trimmed.startsWith('###')) {
       flushPara();
-      bodyHTML += `<h3>${trimmed.replace(/^###\s*/, '')}</h3>`;
+      // Split header from any text that follows on the same line
+      const lines = trimmed.split('\n');
+      const heading = lines[0].replace(/^###\s*/, '').trim();
+      bodyHTML += `<h3>${heading}</h3>`;
+      // If there's remaining text after the header line, process it as a paragraph
+      const remainder = lines.slice(1).join(' ').trim();
+      if (remainder) currentPara = remainder;
       continue;
     }
 
