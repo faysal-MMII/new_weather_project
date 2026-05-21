@@ -265,7 +265,7 @@ ${holidayNote}
 WRITING INSTRUCTIONS:
 1. Start with exactly one "In brief:" sentence summarising the week.
 2. Write the full article after the In brief line.
-3. Use ### for day headers (Monday through Friday only — never Saturday or Sunday). After a day header, do NOT begin the paragraph with the day name again. Go straight into the weather detail.
+3. Use ### for day headers (Monday through Friday only — never Saturday or Sunday). After a ### day header, the very next paragraph must NOT begin with the day name. Start immediately with the weather detail.
 4. Under each day header, write 2–4 substantial paragraphs covering that day's weather in specific detail — temperatures, rain timing, wind shifts, humidity, what it will feel like in different parts of the city.
 5. Write 8–12 paragraphs total, minimum 600 words. No bullet points. Pure prose.
 6. Voice: sound like a professional meteorologist writing for an educated local audience. Be direct, specific, and confident. Reference actual weather mechanisms — low-pressure systems, wind direction shifts, rainfall accumulation ranges, humidity trends. No rhetorical questions. No "a girl can dream." No "let's not complain." No addressing the reader as "you" repeatedly.
@@ -298,6 +298,9 @@ Output only the article text. No title, no byline, no extra commentary.`;
     article = article.replace(/\[MAP:[^\]]*\]/gi, '');
     article = article.replace(/📡[^\n]*/g, '');
     article = article.replace(/\n{3,}/g, '\n\n').trim();
+
+    // Fix duplicate day names after headers (e.g., "### Monday\nMonday The weather...")
+    article = article.replace(/^(###\s*(Monday|Tuesday|Wednesday|Thursday|Friday))\n\2\s*/gm, '$1\n');
 
     // Inject SVGs at fixed positions
     const paragraphs = article.split(/\n\n+/).filter(p => p.trim());
@@ -350,6 +353,9 @@ app.post('/api/forecast', async (req, res) => {
 
     // Collapse excess blank lines
     article = article.replace(/\n{3,}/g, '\n\n').trim();
+
+    // Fix duplicate day names after headers (e.g., "### Monday\nMonday The weather...")
+    article = article.replace(/^(###\s*(Monday|Tuesday|Wednesday|Thursday|Friday))\n\2\s*/gm, '$1\n');
 
     // Inject SVGs at fixed positions using weather data from the request
     const weatherData = req.body.weatherData;
